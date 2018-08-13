@@ -1,0 +1,28 @@
+version: "2.2"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - elasticsearch-log:/var/log
+    ports:
+      - "9201:9200"
+
+  app:
+    build: .
+    command: pipenv run python manage.py runserver 0.0.0.0:8000
+    links:
+      - elasticsearch
+    volumes:
+      - "./:/code"
+    environment:
+      FS_ELASTICSEARCH_URI: http://elasticsearch:9200/
+    ports:
+      - "8000:8000"
+    env_file:
+      - offenegesetze.env
+
+volumes:
+  elasticsearch-data: {}
+  elasticsearch-log: {}

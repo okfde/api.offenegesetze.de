@@ -1,0 +1,29 @@
+version: "2"
+
+services:
+  backend:
+    build: .
+    command: "pipenv run gunicorn -w 4 -b 0.0.0.0:8045 --name offenegesetze_gunicorn \
+      --log-level info --log-file /var/log/gunicorn.log offenegesetze.wsgi:application"
+    volumes:
+      - ./logs/:/var/log/
+    ports:
+      - 127.0.0.1:8045:8045
+    links:
+      - elasticsearch
+    environment:
+      OG_ELASTICSEARCH_URI: http://elasticsearch:9200/
+    env_file:
+      - offenegesetze.env
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - elasticsearch-log:/var/log
+    ports:
+      - 127.0.0.1:9245:9200
+
+volumes:
+  elasticsearch-data: {}
+  elasticsearch-log: {}
