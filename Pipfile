@@ -11,8 +11,12 @@ dataset = "*"
 pdflib = "*"
 "pypdf2" = "*"
 gunicorn = "*"
+django-rest-framework = "*"
+coreapi = "*"
 
 [dev-packages]
+pylint = "*"
+ipdb = "*"
 
 [requires]
 python_version = "3.6"
