@@ -61,5 +61,6 @@ class Command(BaseCommand):
                 publication=publication,
                 title=entry['name'],
                 law_date=make_date(entry['law_date']),
-                page=entry['page']
+                page=entry['page'],
+                order=entry['order']
             )
