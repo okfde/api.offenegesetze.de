@@ -9,8 +9,15 @@ try:
 except ImportError:
     pdflib = None
 
+
+import elasticsearch
+
 from bgbl.models import Publication
-from bgbl.es_models import Publication as ESPublication
+from bgbl.search_indexes import (
+    init_es,
+    Publication as PublicationIndex,
+    PublicationEntry as PublicationEntryIndex
+)
 
 
 class Command(BaseCommand):
@@ -18,13 +25,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('path', type=str)
+        parser.add_option("-r", action='store_true', type=bool, dest='reindex')
 
     def handle(self, *args, **options):
         names = glob.glob(os.path.join(options['path'], '*.pdf'))
         for filename in names:
-            self.load_name(filename)
+            self.load_name(filename, options['reindex'])
 
-    def load_name(self, filename):
+    def load_name(self, filename, reindex=False):
         print(filename)
         # documents_1_1970_25_unlocked_ocr.pdf
         parts = os.path.basename(filename).split('_')
@@ -38,9 +46,6 @@ class Command(BaseCommand):
             number=int(number)
         )
 
-        text = '\n'.join(self.get_text(filename))
-
-        # instantiate the document
         pub_id = '%s-%s-%s' % (
             pub.kind,
             pub.year,
@@ -48,20 +53,34 @@ class Command(BaseCommand):
         )
 
         try:
-            pub = ESPublication.get(
-                id=pub_id,
+            p = PublicationIndex.get(
+                id=pub_id
             )
-        except Exception:
-            pub = ESPublication(
-                id=pub_id,
+            if not reindex:
+                # Already in index
+                return
+        except elasticsearch.exceptions.NotFoundError:
+            p = PublicationIndex(
                 kind=pub.kind,
                 year=pub.year,
                 number=pub.number,
             )
-        pub.date = pub.date
-        pub.page = pub.page
-        pub.content = text
-        pub.save()
+        p.meta.id = pub_id
+        p.date = pub.date
+        p.page = pub.page
+
+        text = list(self.get_text(filename))
+        p.content = text
+
+        p.entries = [
+            PublicationEntryIndex(**{
+                'title': e.title,
+                'law_date': e.law_date,
+                'page': e.page,
+                'order': e.order
+            }) for e in pub.entries.all()
+        ]
+        p.save()
 
     def get_text(self, filename):
         pdf_reader = PdfFileReader(filename)
