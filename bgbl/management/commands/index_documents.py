@@ -28,20 +28,19 @@ class Command(BaseCommand):
         parser.add_option("-r", action='store_true', type=bool, dest='reindex')
 
     def handle(self, *args, **options):
-        names = glob.glob(os.path.join(options['path'], '*.pdf'))
+        names = glob.glob(os.path.join(options['path'], '**/*.pdf'))
         for filename in names:
             self.load_name(filename, options['reindex'])
 
     def load_name(self, filename, reindex=False):
         print(filename)
-        # documents_1_1970_25_unlocked_ocr.pdf
         parts = os.path.basename(filename).split('_')
-        kind = parts[1]
-        year = parts[2]
-        number = parts[3]
+        kind = parts[0]
+        year = parts[1]
+        number = parts[2]
         print(kind, year, number)
         pub = Publication.objects.get(
-            kind='bgbl%s' % kind,
+            kind=kind,
             year=int(year),
             number=int(number)
         )
