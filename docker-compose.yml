@@ -7,6 +7,9 @@ services:
       --log-level info --log-file /var/log/gunicorn.log offenegesetze.wsgi:application"
     volumes:
       - ./logs/:/var/log/
+      - ./db.sqlite3:/code/db.sqlite3
+      - ./data.sqlite:/code/data.sqlite
+      - ./documents:/var/documents
     ports:
       - 127.0.0.1:8045:8045
     links:
