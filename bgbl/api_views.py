@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch
+import elasticsearch
 
 from elasticsearch_dsl import Q
 
@@ -7,14 +7,16 @@ from rest_framework.response import Response
 
 from .search_indexes import Publication as PublicationIndex
 
-es_client = Elasticsearch()
-
 
 class PublicationEntrySerializer(serializers.Serializer):
     order = serializers.IntegerField()
     title = serializers.CharField(required=False)
     law_date = serializers.DateTimeField(required=False)
     page = serializers.IntegerField(required=False)
+    anchor = serializers.SerializerMethodField()
+
+    def get_anchor(self, obj):
+        return '#%s' % obj['order']
 
 
 class PublicationSerializer(serializers.Serializer):
@@ -28,6 +30,17 @@ class PublicationSerializer(serializers.Serializer):
         child=PublicationEntrySerializer(),
         required=False
     )
+    url = serializers.SerializerMethodField()
+    document_url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        return self.get_document_url(obj)
+
+    def get_document_url(self, obj):
+        return (
+            'https://media.offenegesetze.de'
+            '/{kind}/{year}/{kind}_{year}_{number}.pdf'.format(**obj)
+        )
 
 
 class PublicationDetailSerializer(PublicationSerializer):
