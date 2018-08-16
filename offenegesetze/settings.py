@@ -130,6 +130,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+API_URL = 'https://api.offenegesetze.de'
+SITE_URL = 'https://offenegesetze.de'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (),

@@ -2,9 +2,14 @@ import elasticsearch
 
 from elasticsearch_dsl import Q
 
-from rest_framework import viewsets, serializers
+from django.conf import settings
+from django.urls import reverse
+
+from rest_framework import viewsets, serializers, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .renderers import RSSRenderer
 from .search_indexes import Publication as PublicationIndex
 
 
@@ -31,10 +36,16 @@ class PublicationSerializer(serializers.Serializer):
         required=False
     )
     url = serializers.SerializerMethodField()
+    api_url = serializers.SerializerMethodField()
     document_url = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.get_document_url(obj)
+
+    def get_api_url(self, obj):
+        return settings.API_URL + reverse(
+            'api:amtsblatt-detail', kwargs={'pk': obj['id']}
+        )
 
     def get_document_url(self, obj):
         return (
@@ -93,6 +104,8 @@ def filter_search(s, request):
 
 
 class PublicationViewSet(viewsets.ViewSet):
+    renderer_classes = viewsets.ViewSet.renderer_classes + [RSSRenderer]
+
     def list(self, request):
         s = PublicationIndex.search()
         s = filter_search(s, request)
@@ -102,7 +115,14 @@ class PublicationViewSet(viewsets.ViewSet):
         )
         return Response(serializer.data)
 
+    @action(detail=False, renderer_classes=(RSSRenderer,))
+    def rss(self, request):
+        return self.list(request)
+
     def retrieve(self, request, pk=None):
-        pub = PublicationIndex.get(id=pk)
+        try:
+            pub = PublicationIndex.get(id=pk)
+        except elasticsearch.exceptions.NotFoundError:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = PublicationDetailSerializer(make_dict(pub))
         return Response(serializer.data)

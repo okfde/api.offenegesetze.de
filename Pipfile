@@ -13,6 +13,7 @@ pdflib = "*"
 gunicorn = "*"
 django-rest-framework = "*"
 coreapi = "*"
+feedgen = "*"
 
 [dev-packages]
 pylint = "*"
