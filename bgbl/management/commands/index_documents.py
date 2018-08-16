@@ -29,8 +29,10 @@ class Command(BaseCommand):
                             dest='reindex')
 
     def handle(self, *args, **options):
-        names = glob.glob(os.path.join(options['path'], '**/*.pdf'))
+        names = glob.glob(os.path.join(options['path'], '**/**/*.pdf'))
         for filename in names:
+            if '_original' in filename:
+                continue
             self.load_name(filename, options['reindex'])
 
     def load_name(self, filename, reindex=False):
@@ -38,7 +40,7 @@ class Command(BaseCommand):
         parts = os.path.basename(filename).split('_')
         kind = parts[0]
         year = parts[1]
-        number = parts[2]
+        number = parts[2].split('.')[0]
         print(kind, year, number)
         pub = Publication.objects.get(
             kind=kind,
