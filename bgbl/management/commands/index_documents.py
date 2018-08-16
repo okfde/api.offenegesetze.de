@@ -14,7 +14,6 @@ import elasticsearch
 
 from bgbl.models import Publication
 from bgbl.search_indexes import (
-    init_es,
     Publication as PublicationIndex,
     PublicationEntry as PublicationEntryIndex
 )
