@@ -100,6 +100,12 @@ def filter_search(s, request):
                 query=Q("match", **{'entries.title': q}))
         )
 
+    s = s.sort(
+        '-date',
+        'kind',
+        'number',
+    )
+
     return s
 
 
