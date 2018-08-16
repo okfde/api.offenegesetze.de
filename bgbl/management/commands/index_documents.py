@@ -25,7 +25,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('path', type=str)
-        parser.add_option("-r", action='store_true', type=bool, dest='reindex')
+        parser.add_argument("-r", action='store_true',
+                            dest='reindex')
 
     def handle(self, *args, **options):
         names = glob.glob(os.path.join(options['path'], '**/*.pdf'))
