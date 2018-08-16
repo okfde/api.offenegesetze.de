@@ -93,10 +93,14 @@ class Command(BaseCommand):
             pdflib_doc = pdflib.Document(filename)
             pdflib_pages = list(pdflib_doc)
         for page_no in pages:
+            text = None
             if pdflib_pages is not None:
                 page = pdflib_pages[page_no]
-                text = ' '.join(page.lines).strip()
-            else:
+                try:
+                    text = ' '.join(page.lines).strip()
+                except UnicodeDecodeError:
+                    pass
+            if text is None:
                 page = pdf_reader.getPage(page_no)
                 text = page.extractText()
             yield text.strip()
