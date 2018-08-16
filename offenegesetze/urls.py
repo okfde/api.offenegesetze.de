@@ -14,7 +14,7 @@ api_router.register(r'bgbl', PublicationViewSet, base_name='bgbl')
 
 
 schema_view = get_schema_view(title='Offenegesetze.de API')
-urlpatterns += [
-    path('api/v1/', include((api_router.urls, 'api'))),
-    path('api/v1/schema/', schema_view),
+urlpatterns = [
+    path('v1/', include((api_router.urls, 'api'))),
+    path('v1/schema/', schema_view),
 ]
