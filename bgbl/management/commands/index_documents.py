@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         names = glob.glob(
-            os.path.join(options['path'], '/**/*.pdf')
+            os.path.join(options['path'], '**/**/*.pdf')
         )
         names = sorted(names)
         for filename in names:
