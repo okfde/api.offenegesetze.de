@@ -28,7 +28,10 @@ class Command(BaseCommand):
                             dest='reindex')
 
     def handle(self, *args, **options):
-        names = glob.glob(os.path.join(options['path'], '**/**/*.pdf'))
+        names = glob.glob(
+            os.path.join(options['path'], '/**/*.pdf')
+        )
+        names = sorted(names)
         for filename in names:
             if '_original' in filename:
                 continue
