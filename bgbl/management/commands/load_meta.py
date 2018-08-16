@@ -32,13 +32,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('db', type=str)
+        parser.add_argument("--part", dest='part', type=int, default=None)
         parser.add_argument("-r", action='store_true',
                             dest='rerun')
 
     def handle(self, *args, **options):
         rerun = options['rerun']
         db = dataset.connect('sqlite:///' + options['db'])
-        for part in (1, 2,):
+        parts = (1, 2,)
+        if options['part'] is not None:
+            parts = [options['part']]
+        for part in parts:
             self.handle_part(db, part, rerun=rerun)
 
     def handle_part(self, db, part, rerun=False):
