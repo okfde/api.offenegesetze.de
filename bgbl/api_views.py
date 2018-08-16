@@ -102,8 +102,6 @@ def filter_search(s, request):
 
     s = s.sort(
         '-date',
-        'kind',
-        'number',
     )
 
     return s
