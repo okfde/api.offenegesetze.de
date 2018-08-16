@@ -32,16 +32,24 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('db', type=str)
+        parser.add_argument("-r", action='store_true',
+                            dest='rerun')
 
     def handle(self, *args, **options):
-
+        rerun = options['rerun']
         db = dataset.connect('sqlite:///' + options['db'])
+        for part in (1, 2,):
+            self.handle_part(db, part, rerun=rerun)
+
+    def handle_part(self, db, part, rerun=False):
         publication = None
         publication_key = None
         table = db['data']
-        for entry in table.all():
+        entries = table.find(part=part, order_by=['-year', '-number'])
+        for entry in entries:
             entry_pub_key = (entry['part'], entry['year'], entry['number'])
             if entry_pub_key != publication_key:
+                publication_key = entry_pub_key
                 print(publication_key)
                 publication, created = Publication.objects.get_or_create(
                     kind='bgbl%s' % entry['part'],
@@ -52,9 +60,11 @@ class Command(BaseCommand):
                         'page': entry['page']
                     }
                 )
+                if not created and not rerun:
+                    print('Skipping')
+                    return
                 PublicationEntry.objects.filter(
                     publication=publication).delete()
-                publication_key = entry_pub_key
             if entry['kind'] != 'entry':
                 continue
             PublicationEntry.objects.create(
