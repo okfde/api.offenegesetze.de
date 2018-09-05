@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+import raven
 
 
 def env(a, b=None):
@@ -45,7 +46,9 @@ INSTALLED_APPS = [
 
     'rest_framework',
 
-    'bgbl'
+    'bgbl',
+
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -179,4 +182,11 @@ SITE_URL = 'https://offenegesetze.de'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (),
     'UNAUTHENTICATED_USER': None
+}
+
+RAVEN_CONFIG = {
+    'dsn': env('DJANGO_SENTRY_DSN', ''),
+    # If you are using git, you can also automatically configure the
+    # release based on the git info.
+    'release': raven.fetch_git_sha(BASE_DIR),
 }
