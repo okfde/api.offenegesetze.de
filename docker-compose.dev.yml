@@ -17,11 +17,9 @@ services:
     volumes:
       - "./:/code"
     environment:
-      FS_ELASTICSEARCH_URI: http://elasticsearch:9200/
+      OG_ELASTICSEARCH_URI: http://elasticsearch:9200
     ports:
       - "8000:8000"
-    env_file:
-      - offenegesetze.env
 
 volumes:
   elasticsearch-data: {}
