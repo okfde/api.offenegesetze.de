@@ -8,9 +8,21 @@ from django.urls import reverse
 from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.filters import BaseFilterBackend
 
 from .renderers import RSSRenderer
 from .search_indexes import Publication as PublicationIndex
+
+
+def make_dict(hit):
+    d = hit.to_dict()
+    d['id'] = hit.meta.id
+    return d
+
+
+class ElasticResultMixin(object):
+    def to_representation(self, instance):
+        return make_dict(instance)
 
 
 class PublicationEntrySerializer(serializers.Serializer):
@@ -24,7 +36,7 @@ class PublicationEntrySerializer(serializers.Serializer):
         return '#%s' % obj['order']
 
 
-class PublicationSerializer(serializers.Serializer):
+class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     id = serializers.CharField()
     kind = serializers.CharField()
     year = serializers.IntegerField()
@@ -60,64 +72,64 @@ class PublicationDetailSerializer(PublicationSerializer):
     )
 
 
-def make_dict(hit):
-    d = hit.to_dict()
-    d['id'] = hit.meta.id
-    return d
+class PublicationFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        filters = {}
 
+        year = request.GET.get('year')
+        if year:
+            filters['year'] = year
 
-def filter_search(s, request):
-    filters = {}
+        number = request.GET.get('number')
+        if number:
+            filters['number'] = number
 
-    year = request.GET.get('year')
-    if year:
-        filters['year'] = year
+        kind = request.GET.get('kind')
+        if kind:
+            filters['kind'] = kind
 
-    number = request.GET.get('number')
-    if number:
-        filters['number'] = number
+        if filters:
+            queryset = queryset.filter('term', **filters)
 
-    kind = request.GET.get('kind')
-    if kind:
-        filters['kind'] = kind
+        filter_page = request.GET.get('page')
+        if filter_page:
+            queryset = queryset.filter(
+                'nested',
+                path='entries',
+                query=Q('term', entries__page=filter_page)
+            )
 
-    if filters:
-        s = s.filter('term', **filters)
+        q = request.GET.get('q')
+        if q:
+            queryset = queryset.query(
+                Q('match', content=q) |
+                Q('nested', path='entries',
+                    query=Q("match", **{'entries.title': q}))
+            )
 
-    page = request.GET.get('page')
-    if page:
-        s = s.filter(
-            'nested',
-            path='entries',
-            query=Q('term', entries__page=page)
+        queryset = queryset.sort(
+            '-date',
         )
 
-    q = request.GET.get('q')
-    if q:
-        s = s.query(
-            Q('match', content=q) |
-            Q('nested', path='entries',
-                query=Q("match", **{'entries.title': q}))
-        )
-
-    s = s.sort(
-        '-date',
-    )
-
-    return s
+        return queryset
 
 
-class PublicationViewSet(viewsets.ViewSet):
+class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PublicationSerializer
+    filter_backends = (PublicationFilter,)
     renderer_classes = viewsets.ViewSet.renderer_classes + [RSSRenderer]
+    queryset = PublicationIndex.search()
 
-    def list(self, request):
-        s = PublicationIndex.search()
-        s = filter_search(s, request)
-        results = s.execute()
-        serializer = PublicationSerializer(
-            [make_dict(hit) for hit in results], many=True
-        )
-        return Response(serializer.data)
+    serializer_action_classes = {
+        'list': PublicationSerializer,
+        'retrieve': PublicationDetailSerializer
+    }
+
+    def get_serializer_class(self):
+        try:
+            return self.serializer_action_classes[self.action]
+        except (KeyError, AttributeError):
+            return PublicationSerializer
 
     @action(detail=False, renderer_classes=(RSSRenderer,))
     def rss(self, request):
@@ -128,5 +140,5 @@ class PublicationViewSet(viewsets.ViewSet):
             pub = PublicationIndex.get(id=pk)
         except elasticsearch.exceptions.NotFoundError:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = PublicationDetailSerializer(make_dict(pub))
+        serializer = self.get_serializer(make_dict(pub))
         return Response(serializer.data)
