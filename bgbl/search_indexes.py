@@ -1,8 +1,8 @@
 from django.conf import settings
 from elasticsearch_dsl import (
-    DocType, Date, Nested, Double, Integer,
+    DocType, Date, Nested, Integer,
     analyzer, InnerDoc, Keyword, Text,
-    Index
+    Index, token_filter
 )
 from elasticsearch_dsl import connections
 
@@ -11,8 +11,18 @@ connections.create_connection(hosts=[settings.ES_URL], timeout=20)
 
 og_analyzer = analyzer(
     'og_analyzer',
-    tokenizer="standard",
-    filter=["standard", "asciifolding", "lowercase"],
+    tokenizer='standard',
+    filter=[
+        'standard',
+        'lowercase',
+        'keyword_repeat',
+        token_filter('stop_de', type='stop', stopwords="_german_"),
+        'asciifolding',
+        # 'word_delimiter', # Breaks indexing
+        token_filter('decomp', type='decompound'),
+        token_filter('de_stemmer', type='stemmer', name='light_german'),
+        token_filter('unique_stem', type='unique', only_on_same_position=True)
+    ],
 )
 
 
@@ -50,5 +60,3 @@ def _destroy_index():
 def init_es():
     if not og_publication.exists():
         og_publication.create()
-
-    Publication.init()
