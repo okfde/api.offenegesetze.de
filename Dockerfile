@@ -12,11 +12,9 @@ RUN cd /code/ && pipenv install -d
 
 COPY . /code
 
-# RUN pipenv run ./manage.py collectstatic --noinput
-
 ENV PYTHONPATH /code
 
-RUN pipenv run python manage.py collectstatic
+RUN pipenv run python manage.py collectstatic --noinput
 
 # Run the green unicorn
 CMD pipenv run gunicorn -w 4 -b 0.0.0.0:8040 --name offenegesetze_gunicorn \

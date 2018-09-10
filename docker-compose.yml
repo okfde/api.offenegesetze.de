@@ -10,6 +10,7 @@ services:
       - ./db.sqlite3:/code/db.sqlite3
       - ./data.sqlite:/code/data.sqlite
       - ./documents:/var/documents
+      - ./static:/code/static
     ports:
       - 127.0.0.1:8045:8045
     links:
