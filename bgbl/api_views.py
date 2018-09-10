@@ -20,6 +20,8 @@ from .search_indexes import Publication as PublicationIndex
 def make_dict(hit):
     d = hit.to_dict()
     d['id'] = hit.meta.id
+    if hasattr(hit.meta, 'highlight'):
+        d['content__highlight'] = list(hit.meta.highlight.content)
     return d
 
 
@@ -109,6 +111,7 @@ class PublicationFilter(BaseFilterBackend):
                 Q('nested', path='entries',
                     query=Q("match", **{'entries.title': q}))
             )
+            queryset = queryset.highlight('content')
 
         queryset = queryset.sort(
             '-date',
