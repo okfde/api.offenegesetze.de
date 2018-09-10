@@ -14,8 +14,6 @@ COPY . /code
 
 ENV PYTHONPATH /code
 
-RUN pipenv run python manage.py collectstatic --noinput
-
 # Run the green unicorn
-CMD pipenv run gunicorn -w 4 -b 0.0.0.0:8040 --name offenegesetze_gunicorn \
+CMD pipenv run python manage.py collectstatic --noinput && pipenv run gunicorn -w 4 -b 0.0.0.0:8040 --name offenegesetze_gunicorn \
   --log-level info --log-file /var/log/gunicorn.log offenegesetze.wsgi:application
