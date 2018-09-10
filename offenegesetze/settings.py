@@ -189,7 +189,7 @@ SITE_URL = 'https://offenegesetze.de'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100,
+    'PAGE_SIZE': 20,
     'DEFAULT_AUTHENTICATION_CLASSES': (),
     'UNAUTHENTICATED_USER': None
 }
