@@ -187,6 +187,8 @@ DEFAULT_LOGGING = {
 API_URL = 'https://api.offenegesetze.de'
 SITE_URL = 'https://offenegesetze.de'
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 20,
