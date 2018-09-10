@@ -27,7 +27,7 @@ def make_dict(hit):
 
 class ElasticResultMixin(object):
     def to_representation(self, instance):
-        return make_dict(instance)
+        return super().to_representation(make_dict(instance))
 
 
 class PublicationEntrySerializer(serializers.Serializer):
@@ -55,6 +55,10 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
     document_url = serializers.SerializerMethodField()
+    content__highlight = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
 
     def get_url(self, obj):
         return self.get_document_url(obj)
@@ -170,7 +174,6 @@ class PublicationFilter(BaseFilterBackend):
 
 
 class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = PublicationSerializer
     filter_backends = (PublicationFilter,)
     renderer_classes = viewsets.ViewSet.renderer_classes + [RSSRenderer]
     queryset = PublicationIndex.search()
@@ -192,8 +195,8 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
 
     def retrieve(self, request, pk=None):
         try:
-            pub = PublicationIndex.get(id=pk)
+            instance = PublicationIndex.get(id=pk)
         except elasticsearch.exceptions.NotFoundError:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(make_dict(pub))
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
