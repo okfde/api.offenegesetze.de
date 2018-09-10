@@ -9,6 +9,9 @@ from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.filters import BaseFilterBackend
+from rest_framework.compat import (
+    coreapi, coreschema
+)
 
 from .renderers import RSSRenderer
 from .search_indexes import Publication as PublicationIndex
@@ -112,6 +115,55 @@ class PublicationFilter(BaseFilterBackend):
         )
 
         return queryset
+
+    def get_schema_fields(self, view):
+        return [
+            coreapi.Field(
+                name='q',
+                required=False,
+                location='query',
+                schema=coreschema.String(
+                    title='Query',
+                    description='Query with Lucene syntax'
+                )
+            ),
+            coreapi.Field(
+                name='year',
+                required=False,
+                location='query',
+                schema=coreschema.String(
+                    title='Year',
+                    description='Query by year'
+                )
+            ),
+            coreapi.Field(
+                name='number',
+                required=False,
+                location='query',
+                schema=coreschema.String(
+                    title='Number',
+                    description='Query by issue number'
+                )
+            ),
+            coreapi.Field(
+                name='kind',
+                required=False,
+                location='query',
+                schema=coreschema.String(
+                    title='Kind',
+                    description='Kind of publication'
+                )
+            ),
+            coreapi.Field(
+                name='page',
+                required=False,
+                location='query',
+                schema=coreschema.String(
+                    title='Page',
+                    description='Query by page of issue'
+                )
+            ),
+        ]
 
 
 class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
