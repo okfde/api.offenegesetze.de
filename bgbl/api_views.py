@@ -30,31 +30,24 @@ class ElasticResultMixin(object):
         return super().to_representation(make_dict(instance))
 
 
-class PublicationEntrySerializer(serializers.Serializer):
-    order = serializers.IntegerField()
-    title = serializers.CharField(required=False)
-    law_date = serializers.DateTimeField(required=False)
-    page = serializers.IntegerField(required=False)
-    anchor = serializers.SerializerMethodField()
-
-    def get_anchor(self, obj):
-        return '#%s' % obj['order']
-
-
 class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     id = serializers.CharField()
     kind = serializers.CharField()
     year = serializers.IntegerField()
     number = serializers.IntegerField()
     date = serializers.DateTimeField(required=False)
-    page = serializers.IntegerField(required=False)
-    entries = serializers.ListField(
-        child=PublicationEntrySerializer(),
-        required=False
-    )
+
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
     document_url = serializers.SerializerMethodField()
+
+    order = serializers.IntegerField()
+    title = serializers.CharField(required=False)
+    law_date = serializers.DateTimeField(required=False)
+    page = serializers.IntegerField(required=False)
+    pdf_page = serializers.IntegerField(required=False)
+    num_pages = serializers.IntegerField()
+
     content__highlight = serializers.ListField(
         child=serializers.CharField(),
         required=False
@@ -71,7 +64,8 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     def get_document_url(self, obj):
         return (
             'https://media.offenegesetze.de'
-            '/{kind}/{year}/{kind}_{year}_{number}.pdf'.format(**obj)
+            '/{kind}/{year}/{kind}_{year}_{number}.pdf'.format(**obj) +
+            '#page={}'.format(obj['pdf_page']) if obj['pdf_page'] else ''
         )
 
 
@@ -111,14 +105,12 @@ class PublicationFilter(BaseFilterBackend):
         q = request.GET.get('q')
         if q:
             queryset = queryset.query(
-                Q('match', content=q) |
-                Q('nested', path='entries',
-                    query=Q("match", **{'entries.title': q}))
+                Q('multi_match', query=q, fields=['title', 'content'])
             )
-            queryset = queryset.highlight('content')
+            queryset = queryset.highlight('title')
 
         queryset = queryset.sort(
-            '-date',
+            '-date', 'kind', 'order'
         )
 
         return queryset

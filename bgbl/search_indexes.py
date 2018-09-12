@@ -1,7 +1,7 @@
 from django.conf import settings
 from elasticsearch_dsl import (
-    DocType, Date, Nested, Integer,
-    analyzer, InnerDoc, Keyword, Text,
+    DocType, Date, Integer,
+    analyzer, Keyword, Text,
     Index, token_filter
 )
 from elasticsearch_dsl import connections
@@ -26,21 +26,26 @@ og_analyzer = analyzer(
 )
 
 
-class PublicationEntry(InnerDoc):
-    title = Keyword()
-    law_date = Date()
-    page = Integer()
-
-
 class Publication(DocType):
     kind = Keyword()
     year = Integer()
     number = Integer()
     date = Date()
     page = Integer()
-    content = Text(fields={'raw': Keyword()}, analyzer=og_analyzer)
-
-    entries = Nested(PublicationEntry)
+    order = Integer()
+    num_pages = Integer()
+    title = Text(
+        fields={'raw': Keyword()},
+        analyzer=og_analyzer,
+        index_options='offsets'
+    )
+    law_date = Date()
+    pdf_page = Integer()
+    content = Text(
+        fields={'raw': Keyword()},
+        analyzer=og_analyzer,
+        index_options='offsets'
+    )
 
 
 og_publication = Index('offenegesetze_publications')
@@ -51,6 +56,7 @@ og_publication.settings(
 
 og_publication.doc_type(Publication)
 og_publication.analyzer(og_analyzer)
+# og_publication.settings(**{"index.highlight.max_analyzed_offset": 10000})
 
 
 def _destroy_index():

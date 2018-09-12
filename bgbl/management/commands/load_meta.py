@@ -1,4 +1,6 @@
+import itertools
 from datetime import date
+
 from django.core.management.base import BaseCommand
 
 import dataset
@@ -28,6 +30,17 @@ def make_date(val):
     )
 
 
+def pairwise(iterable):
+    "s -> (None,s0), (s0,s1), (s1, s2), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)
+
+
+def get_pub_key(entry):
+    return (entry['part'], entry['year'], entry['number'])
+
+
 class Command(BaseCommand):
     help = 'Load meta data from scraper'
 
@@ -50,9 +63,18 @@ class Command(BaseCommand):
         publication = None
         publication_key = None
         table = db['data']
-        entries = table.find(part=part, order_by=['-year', '-number'])
-        for entry in entries:
-            entry_pub_key = (entry['part'], entry['year'], entry['number'])
+        entries = table.find(part=part, order_by=['-year', '-number', 'order'])
+        page_offset = None
+        for entry, next_entry in pairwise(entries):
+            if entry is None:
+                continue
+            entry_pub_key = get_pub_key(entry)
+
+            if next_entry is not None:
+                next_entry_pub_key = get_pub_key(next_entry)
+                if next_entry_pub_key != entry_pub_key:
+                    next_entry = None
+
             if entry_pub_key != publication_key:
                 publication_key = entry_pub_key
                 print(publication_key)
@@ -70,12 +92,27 @@ class Command(BaseCommand):
                     return
                 PublicationEntry.objects.filter(
                     publication=publication).delete()
-            if entry['kind'] != 'entry':
+            if entry['kind'] == 'meta':
+                if entry['page'] is not None:
+                    # Set offset for these entries to 
+                    # the meta page (usually ToC)
+                    page_offset = entry['page'] - 1
                 continue
+            pdf_page = (
+                entry['page'] - page_offset
+                if entry['page'] is not None else None
+            )
+            num_pages = 1
+            if next_entry and next_entry['page'] and pdf_page is not None:
+                next_pdf_page = next_entry['page'] - page_offset
+                num_pages = next_pdf_page - pdf_page
+
             PublicationEntry.objects.create(
                 publication=publication,
                 title=entry['name'],
                 law_date=make_date(entry['law_date']),
                 page=entry['page'],
-                order=entry['order']
+                order=entry['order'],
+                num_pages=num_pages,
+                pdf_page=pdf_page
             )
