@@ -107,7 +107,7 @@ class PublicationFilter(BaseFilterBackend):
             queryset = queryset.query(
                 Q('multi_match', query=q, fields=['title', 'content'])
             )
-            queryset = queryset.highlight('title')
+            queryset = queryset.highlight('content')
 
         queryset = queryset.sort(
             '-date', 'kind', 'order'
