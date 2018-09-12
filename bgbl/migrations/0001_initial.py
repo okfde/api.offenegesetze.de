@@ -34,6 +34,8 @@ class Migration(migrations.Migration):
                 ('title', models.TextField(blank=True)),
                 ('law_date', models.DateField(blank=True, null=True)),
                 ('page', models.PositiveIntegerField(blank=True, null=True)),
+                ('pdf_page', models.PositiveIntegerField(blank=True, null=True)),
+                ('num_pages', models.PositiveIntegerField()),
                 ('publication', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='entries', to='bgbl.Publication')),
             ],
             options={

@@ -26,6 +26,8 @@ class PublicationEntry(models.Model):
     title = models.TextField(blank=True)
     law_date = models.DateField(null=True, blank=True)
     page = models.PositiveIntegerField(null=True, blank=True)
+    pdf_page = models.PositiveIntegerField(null=True, blank=True)
+    num_pages = models.PositiveIntegerField(default=1)
 
     class Meta:
         ordering = ('page',)
