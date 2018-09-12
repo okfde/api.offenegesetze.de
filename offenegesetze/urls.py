@@ -10,7 +10,11 @@ from bgbl.api_views import PublicationViewSet
 
 api_router = DefaultRouter()
 
-api_router.register(r'amtsblatt', PublicationViewSet, base_name='amtsblatt')
+api_router.register(
+    r'veroeffentlichung',
+    PublicationViewSet,
+    base_name='veroeffentlichung'
+)
 
 
 schema_view = get_schema_view(title='Offenegesetze.de API')

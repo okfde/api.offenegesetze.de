@@ -58,7 +58,7 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
 
     def get_api_url(self, obj):
         return settings.API_URL + reverse(
-            'api:amtsblatt-detail', kwargs={'pk': obj['id']}
+            'api:veroeffentlichung-detail', kwargs={'pk': obj['id']}
         )
 
     def get_document_url(self, obj):
