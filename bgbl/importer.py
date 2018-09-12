@@ -166,59 +166,65 @@ class BGBlImporter:
                 )
             )
             if entry_created or self.reindex:
-                self.index_document(publication, entry)
+                index_entry(
+                    publication, entry,
+                    document_path=self.document_path,
+                    reindex=self.reindex
+                )
 
         return created
 
-    def index_document(self, pub, entry):
-        pub_path = pub.get_path(self.document_path)
-        if not os.path.exists(pub_path):
-            print('File not found', pub_path)
-            return False
 
-        pub_id = '%s-%s-%s-%s' % (
-            pub.kind,
-            pub.year,
-            pub.number,
-            entry.order
+def index_entry(pub, entry, document_path='', reindex=False):
+    pub_path = pub.get_path(document_path)
+    if not os.path.exists(pub_path):
+        print('File not found', pub_path)
+        return None
+
+    pub_id = '%s-%s-%s-%s' % (
+        pub.kind,
+        pub.year,
+        pub.number,
+        entry.order
+    )
+
+    try:
+        p = PublicationIndex.get(
+            id=pub_id
         )
+        if not reindex:
+            # Already in index
+            return
+    except elasticsearch.exceptions.NotFoundError:
+        p = PublicationIndex(
+            kind=pub.kind,
+            year=pub.year,
+            number=pub.number,
+            date=pub.date,
+            order=entry.order,
+            page=entry.page,
+            pdf_page=entry.pdf_page,
+            law_date=entry.law_date,
+            num_pages=entry.num_pages,
+            title=entry.title,
+        )
+    p.meta.id = pub_id
 
-        try:
-            p = PublicationIndex.get(
-                id=pub_id
-            )
-            if not self.reindex:
-                # Already in index
-                return
-        except elasticsearch.exceptions.NotFoundError:
-            p = PublicationIndex(
-                kind=pub.kind,
-                year=pub.year,
-                number=pub.number,
-                date=pub.date,
-                order=entry.order,
-                page=entry.page,
-                pdf_page=entry.pdf_page,
-                law_date=entry.law_date,
-                num_pages=entry.num_pages,
-                title=entry.title,
-            )
-        p.meta.id = pub_id
+    if not hasattr(pub, '_text'):
+        pub._text = list(get_text(pub_path))
 
-        if not hasattr(pub, '_text'):
-            pub._text = list(get_text(pub_path))
+    start = 0
+    if entry.pdf_page is not None:
+        start = entry.pdf_page - 1
 
-        start = 0
-        if entry.pdf_page is not None:
-            start = entry.pdf_page - 1
+    end = len(pub._text)
+    if entry.num_pages:
+        end = start + entry.num_pages + 1
 
-        end = len(pub._text)
-        if entry.num_pages:
-            end = start + entry.num_pages + 1
+    p.content = list(pub._text[start:end])
 
-        p.content = list(pub._text[start:end])
-
-        p.save()
+    p.save()
+    return p
 
 
 def get_text(filename):
