@@ -80,6 +80,7 @@ class BGBlImporter:
         for entry in entries:
             pub_key = get_pub_key(entry)
             if current_pub_key != pub_key:
+                current_pub_key = pub_key
                 yield pub_key
 
     def get_tasks(self):
