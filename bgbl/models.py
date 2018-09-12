@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 
 
@@ -16,6 +18,15 @@ class Publication(models.Model):
 
     def __str__(self):
         return '%s: %s-%s' % (self.kind, self.year, self.number)
+
+    def get_path(self, base_path):
+        return os.path.join(
+            base_path,
+            '{kind}/{year}/{kind}_{year}_{number}.pdf'.format(
+                kind=self.kind,
+                year=self.year,
+                number=self.number
+            ))
 
 
 class PublicationEntry(models.Model):
