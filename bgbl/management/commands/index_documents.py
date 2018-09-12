@@ -18,6 +18,8 @@ class Command(BaseCommand):
                             dest='rerun')
         parser.add_argument("-i", action='store_true',
                             dest='reindex')
+        parser.add_argument("-p", action='store_true',
+                            dest='parallel')
 
     def handle(self, *args, **options):
         if options['reindex']:
@@ -33,7 +35,7 @@ class Command(BaseCommand):
             rerun=options['rerun'],
             reindex=options['reindex'],
         )
-        if options['rerun']:
+        if options['parallel']:
             with Pool(4) as pool:
                 pool.map(
                     BGBlImporter.run_task,
