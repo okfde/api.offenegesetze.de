@@ -1,12 +1,15 @@
+from collections import OrderedDict
+
 import elasticsearch
-
-from elasticsearch_dsl import Q
-
+from elasticsearch_dsl import (
+    FacetedSearch, TermsFacet, DateHistogramFacet
+)
 from django.conf import settings
 from django.urls import reverse
 
 from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.compat import (
@@ -14,20 +17,49 @@ from rest_framework.compat import (
 )
 
 from .renderers import RSSRenderer
-from .search_indexes import Publication as PublicationIndex
+from .search_indexes import Publication
 
 
 def make_dict(hit):
     d = hit.to_dict()
     d['id'] = hit.meta.id
+    if hit.meta.score:
+        d['score'] = hit.meta.score
     if hasattr(hit.meta, 'highlight'):
-        d['content__highlight'] = list(hit.meta.highlight.content)
+        for key in hit.meta.highlight:
+            d['%s__highlight' % key] = list(hit.meta.highlight[key])
     return d
+
+
+def dump_facets(facets):
+    return {
+        key: [{
+            'value': tag,
+            'count': count,
+            'selected': selected
+        } for (tag, count, selected) in facets[key]
+        ] for key in facets
+    }
+
+
+class PublicationSearch(FacetedSearch):
+    doc_types = [Publication]
+    fields = ['title', 'content']
+
+    facets = {
+        'kind': TermsFacet(field='kind'),
+        'year': TermsFacet(field='year'),
+        'number': TermsFacet(field='number'),
+        'date': DateHistogramFacet(
+            field='date', interval='year'
+        )
+    }
 
 
 class ElasticResultMixin(object):
     def to_representation(self, instance):
-        return super().to_representation(make_dict(instance))
+        ret = super().to_representation(make_dict(instance))
+        return ret
 
 
 class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
@@ -48,8 +80,15 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     pdf_page = serializers.IntegerField(required=False)
     num_pages = serializers.IntegerField()
 
+    title__highlight = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
     content__highlight = serializers.ListField(
         child=serializers.CharField(),
+        required=False
+    )
+    score = serializers.FloatField(
         required=False
     )
 
@@ -91,29 +130,23 @@ class PublicationFilter(BaseFilterBackend):
         if kind:
             filters['kind'] = kind
 
-        if filters:
-            queryset = queryset.filter('term', **filters)
-
         filter_page = request.GET.get('page')
         if filter_page:
-            queryset = queryset.filter(
-                'nested',
-                path='entries',
-                query=Q('term', entries__page=filter_page)
-            )
+            filters['page'] = filter_page
 
-        q = request.GET.get('q')
-        if q:
-            queryset = queryset.query(
-                Q('multi_match', query=q, fields=['title', 'content'])
-            )
-            queryset = queryset.highlight('content')
+        query = request.GET.get('q')
 
-        queryset = queryset.sort(
-            '-date', 'kind', 'order'
+        sort = ('-date', 'kind', 'order')
+        if query is not None:
+            sort = ('_score',)
+
+        queryset = PublicationSearch(
+            query=query,
+            filters=filters,
+            sort=sort
         )
-
-        return queryset
+        print(queryset._s.to_dict())
+        return queryset.execute()
 
     def get_schema_fields(self, view):
         return [
@@ -165,10 +198,22 @@ class PublicationFilter(BaseFilterBackend):
         ]
 
 
+class CustomLimitOffsetPagination(LimitOffsetPagination):
+    def get_paginated_response(self, data):
+        return Response(OrderedDict([
+            ('count', self.count),
+            ('next', self.get_next_link()),
+            ('previous', self.get_previous_link()),
+            ('results', data['results']),
+            ('facets', dump_facets(data['facets']))
+        ]))
+
+
 class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (PublicationFilter,)
     renderer_classes = viewsets.ViewSet.renderer_classes + [RSSRenderer]
-    queryset = PublicationIndex.search()
+    queryset = Publication.search()
+    pagination_class = CustomLimitOffsetPagination
 
     serializer_action_classes = {
         'list': PublicationSerializer,
@@ -181,13 +226,29 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
         except (KeyError, AttributeError):
             return PublicationSerializer
 
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        print('queryset', queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            print('PAGE', page)
+            serializer = self.get_serializer(page, many=True)
+
+            return self.get_paginated_response({
+                'results': serializer.data,
+                'facets': queryset.facets
+            })
+        print('PAGENONE')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, renderer_classes=(RSSRenderer,))
     def rss(self, request):
         return self.list(request)
 
     def retrieve(self, request, pk=None):
         try:
-            instance = PublicationIndex.get(id=pk)
+            instance = Publication.get(id=pk)
         except elasticsearch.exceptions.NotFoundError:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(instance)
