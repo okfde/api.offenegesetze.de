@@ -104,7 +104,7 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
         return (
             'https://media.offenegesetze.de'
             '/{kind}/{year}/{kind}_{year}_{number}.pdf'.format(**obj) +
-            '#page={}'.format(obj['pdf_page']) if obj['pdf_page'] else ''
+            '#page={}'.format(obj['pdf_page']) if obj.get('pdf_page') else ''
         )
 
 
