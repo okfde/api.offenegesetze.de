@@ -115,6 +115,7 @@ class BGBlImporter:
         )
         publication = None
         created = True
+        page_offset = 0
 
         for entry, next_entry in pairwise(entries):
             if entry is None:
