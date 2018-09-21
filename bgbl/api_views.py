@@ -23,7 +23,7 @@ from .search_indexes import Publication
 def make_dict(hit):
     d = hit.to_dict()
     d['id'] = hit.meta.id
-    if hit.meta.score:
+    if getattr(hit.meta, 'score', None):
         d['score'] = hit.meta.score
     if hasattr(hit.meta, 'highlight'):
         for key in hit.meta.highlight:
