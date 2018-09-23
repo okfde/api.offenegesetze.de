@@ -23,6 +23,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.utils.urls import (
     replace_query_param, remove_query_param
 )
+from rest_framework.settings import api_settings
 
 from .renderers import RSSRenderer
 from .search_indexes import Publication
@@ -137,7 +138,7 @@ class PublicationDetailSerializer(PublicationSerializer):
 class CustomPageNumberPagination(PageNumberPagination):
     page_query_param = 'p'
     max_page = 10
-    page_size = 3
+    page_size = api_settings.PAGE_SIZE
 
     def paginate_queryset(self, queryset, request, view=None):
         """
@@ -186,7 +187,7 @@ class CustomPageNumberPagination(PageNumberPagination):
 
 
 class FilterPagination(CursorPagination):
-    page_size = 3
+    page_size = api_settings.PAGE_SIZE
     cursor_query_param = 'offset'
     ordering = ('-date', 'kind', 'order')
 
