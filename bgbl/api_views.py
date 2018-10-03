@@ -1,9 +1,13 @@
 from collections import OrderedDict
+import logging
+import json
 
 import elasticsearch
 from elasticsearch_dsl import (
     FacetedSearch, TermsFacet, DateHistogramFacet
 )
+from elasticsearch_dsl.faceted_search import Facet
+from elasticsearch_dsl.query import Range
 
 from django.conf import settings
 from django.urls import reverse
@@ -28,6 +32,8 @@ from rest_framework.settings import api_settings
 from .renderers import RSSRenderer
 from .search_indexes import Publication
 
+logger = logging.getLogger(name=__name__)
+
 
 def make_dict(hit):
     d = hit.to_dict()
@@ -51,14 +57,44 @@ def dump_facets(facets):
     }
 
 
+class NumberRangeFacet(Facet):
+    agg_type = 'terms'
+
+    def get_value_filter(self, filter_value):
+        f, t = None, None
+        try:
+            if '-' in filter_value:
+                f, t = filter_value.split('-', 1)
+            if f == '':
+                f = None
+            else:
+                f = int(f)
+            if t == '':
+                t = None
+            else:
+                t = int(t)
+        except ValueError:
+            f, t = None, None
+
+        limits = {}
+        if f is not None:
+            limits['gte'] = f
+        if t is not None:
+            limits['lte'] = t
+
+        return Range(**{
+            self._params['field']: limits
+        })
+
+
 class PublicationSearch(FacetedSearch):
     doc_types = [Publication]
     fields = ['title', 'content']
 
     facets = {
         'kind': TermsFacet(field='kind'),
-        'year': TermsFacet(field='year'),
-        'number': TermsFacet(field='number'),
+        'year': NumberRangeFacet(field='year'),
+        'number': NumberRangeFacet(field='number'),
         'date': DateHistogramFacet(
             field='date', interval='year'
         )
@@ -236,6 +272,7 @@ class FilterPagination(CursorPagination):
         # We also always fetch an extra item in order to determine if there is a
         # page following on from this one.
         queryset = queryset[offset:offset + self.page_size + 1]
+        logger.debug('ES query: %s', json.dumps(queryset._s.to_dict()))
         results = queryset.execute()
 
         self.page = results[:self.page_size]
@@ -361,19 +398,19 @@ class PublicationFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         filters = {}
 
-        year = request.GET.get('year')
+        year = request.GET.getlist('year')
         if year:
             filters['year'] = year
 
-        number = request.GET.get('number')
+        number = request.GET.getlist('number')
         if number:
             filters['number'] = number
 
-        kind = request.GET.get('kind')
+        kind = request.GET.getlist('kind')
         if kind:
             filters['kind'] = kind
 
-        filter_page = request.GET.get('page')
+        filter_page = request.GET.getlist('page')
         if filter_page:
             filters['page'] = filter_page
 
