@@ -18,12 +18,14 @@ class Command(BaseCommand):
                             dest='rerun')
         parser.add_argument("-i", action='store_true',
                             dest='reindex')
+        parser.add_argument("-D", action='store_true',
+                            dest='destroy_index')
         parser.add_argument("-p", action='store_true',
                             dest='parallel')
 
     def handle(self, *args, **options):
-        if options['reindex']:
-            print('Reindexing: destroying index!')
+        if options['destroy_index']:
+            print('Destroying index!')
             try:
                 _destroy_index()
             except Exception:
