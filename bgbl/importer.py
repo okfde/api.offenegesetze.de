@@ -49,7 +49,7 @@ def pairwise(iterable):
     "s -> (None,s0), (s0,s1), (s1, s2), ..."
     a, b = itertools.tee(iterable)
     next(b, None)
-    return zip(a, b)
+    return itertools.zip_longest(a, b)
 
 
 def get_pub_key(entry):
