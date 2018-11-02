@@ -13,7 +13,7 @@ try:
 except ImportError:
     pdflib = None
 
-from pdfrw import PdfReader, PdfWriter, PdfDict
+from pdfrw import PdfReader, PdfWriter, PdfDict, PdfName, PdfString
 
 import dataset
 
@@ -310,6 +310,13 @@ def remove_watermark(filename, backup=True):
     pdf_file = uncompress_pdf(filename)
 
     doc = PdfReader(pdf_file)
+    meta = {
+        'Creator': 'OffeneGesetze.de',
+        'Keywords': 'Amtliches Werk nach §5 UrhG https://offenegesetze.de'
+    }
+
+    for key, val in meta.items():
+        doc.Info[PdfName(key)] = PdfString.from_unicode(val)
 
     doc = strip_all_xobjects(doc)
 
