@@ -30,7 +30,7 @@ from rest_framework.utils.urls import (
 from rest_framework.settings import api_settings
 
 from .renderers import RSSRenderer
-from .search_indexes import Publication
+from .search_indexes import Publication, og_publication
 
 logger = logging.getLogger(name=__name__)
 
@@ -89,7 +89,8 @@ class NumberRangeFacet(Facet):
 
 class PublicationSearch(FacetedSearch):
     doc_types = [Publication]
-    fields = ['title', 'content']
+    index = 'offenegesetze_publications'
+    fields = ['title^3', 'content']
 
     facets = {
         'kind': TermsFacet(field='kind'),
@@ -111,6 +112,22 @@ class PublicationSearch(FacetedSearch):
 
     def add_pagination_filter(self, filter_kwargs):
         self._s = self._s.filter('range', **filter_kwargs)
+
+    def query(self, search, query):
+        """
+        Add query part to ``search``.
+        Override this if you wish to customize the query used.
+        """
+        if query:
+            return search.query(
+                'simple_query_string',
+                analyzer='german',
+                fields=self.fields,
+                query=query,
+                default_operator='and',
+                lenient=True
+            )
+        return search
 
 
 class ElasticResultMixin(object):
