@@ -17,7 +17,8 @@ class Command(BaseCommand):
         if doc_path.endswith('.pdf'):
             filenames = [doc_path]
         else:
-            filenames = glob(os.path.join(doc_path, '**/*.pdf'))
+            pattern = os.path.join(doc_path, '**/*.pdf')
+            filenames = glob(pattern, recursive=True)
 
         for filename in filenames:
             if filename.endswith(('_original.pdf', '_watermarked.pdf')):
