@@ -13,7 +13,7 @@ try:
 except ImportError:
     pdflib = None
 
-from pdfrw import PdfReader, PdfWriter, PdfDict, PdfName, PdfString
+from pdfrw import PdfReader, PdfWriter, PdfDict, PdfName, PdfString, PdfTokens
 
 import dataset
 
@@ -322,10 +322,13 @@ def remove_watermark(filename, backup=True):
 
     for page_no, page in enumerate(doc.pages, 1):
         stream = page.Contents.stream
-        if WATERMARK_LINE not in stream:
-            logger.warning('PDF does not contain Watermark line: %s page %s',
-                           filename, page_no)
-        stream = stream.replace(WATERMARK_LINE, '')
+        if WATERMARK_LINE in stream:
+            stream = stream.replace(WATERMARK_LINE, '')
+        else:
+            stream, found = complex_watermark_removal(stream)
+            if not found:
+                logger.warning('No watermark removal: %s page %s',
+                               filename, page_no)
 
         page.Contents = PdfDict()
         page.Contents.stream = stream
@@ -343,6 +346,32 @@ def remove_watermark(filename, backup=True):
 
     with open(filename, 'wb') as f:
         f.write(compressed_output.getvalue())
+
+
+NEEDLE_1 = '(Das Bundesgesetzblatt im Internet'
+NEEDLE_2 = 'nzeiger.de)'
+
+
+def complex_watermark_removal(stream, start_offset=1, end_offset=2):
+    found = False
+    start = None
+    end = None
+    for i, token in enumerate(PdfTokens(stream)):
+        if NEEDLE_1 in token:
+            start = i
+            found = True
+            continue
+        if NEEDLE_2 in token:
+            end = i
+    tokens = list(PdfTokens(stream))
+    if start is None or end is None:
+        return '\n'.join(tokens)
+    if tokens[start - 1] == '[':
+        start = start - 1
+    while tokens[end].upper() != 'TJ':
+        end += 1
+    end += 1
+    return '\n'.join(tokens[:start] + tokens[end:]), found
 
 
 def strip_all_xobjects(pdf):
