@@ -365,7 +365,7 @@ def complex_watermark_removal(stream, start_offset=1, end_offset=2):
             end = i
     tokens = list(PdfTokens(stream))
     if start is None or end is None:
-        return '\n'.join(tokens)
+        return '\n'.join(tokens), False
     if tokens[start - 1] == '[':
         start = start - 1
     while tokens[end].upper() != 'TJ':
