@@ -22,4 +22,7 @@ class Command(BaseCommand):
         for filename in filenames:
             if filename.endswith(('_original.pdf', '_watermarked.pdf')):
                 continue
+            watermarked_filename = filename.replace('.pdf', '_watermarked.pdf')
+            if os.path.exists(watermarked_filename):
+                continue
             remove_watermark(filename)
