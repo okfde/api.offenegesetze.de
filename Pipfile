@@ -15,6 +15,7 @@ django-rest-framework = "*"
 coreapi = "*"
 feedgen = "*"
 raven = "*"
+pdfrw = "*"
 
 [dev-packages]
 pylint = "*"
