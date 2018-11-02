@@ -320,10 +320,11 @@ def remove_watermark(filename, backup=True):
 
     doc = strip_all_xobjects(doc)
 
-    for page in doc.pages:
+    for page_no, page in enumerate(doc.pages, 1):
         stream = page.Contents.stream
         if WATERMARK_LINE not in stream:
-            logger.warning('PDF does not contain Watermark line: %s', filename)
+            logger.warning('PDF does not contain Watermark line: %s page %s',
+                           filename, page_no)
         stream = stream.replace(WATERMARK_LINE, '')
 
         page.Contents = PdfDict()
@@ -346,6 +347,8 @@ def remove_watermark(filename, backup=True):
 
 def strip_all_xobjects(pdf):
     for i, page in enumerate(pdf.pages):
+        if page.Resources.XObject is None:
+            continue
         names = list(page.Resources.XObject)
         for name in names:
             del page.Resources.XObject[name]
