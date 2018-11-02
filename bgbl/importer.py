@@ -1,12 +1,19 @@
 from datetime import date
 import itertools
+from io import BytesIO
+import logging
 import os
+import subprocess
+import shutil
+import tempfile
 
 from PyPDF2 import PdfFileReader
 try:
     import pdflib
 except ImportError:
     pdflib = None
+
+from pdfrw import PdfReader, PdfWriter, PdfDict
 
 import dataset
 
@@ -16,6 +23,8 @@ from bgbl.models import Publication, PublicationEntry
 from bgbl.search_indexes import (
     Publication as PublicationIndex,
 )
+
+logger = logging.getLogger(__name__)
 
 
 FIX_LIST = {
@@ -242,10 +251,96 @@ def get_text(filename):
         if pdflib_pages is not None:
             page = pdflib_pages[page_no]
             try:
-                text = ' '.join(page.lines).strip()
+                text = '\n'.join(page.lines).strip()
             except UnicodeDecodeError:
                 pass
         if text is None:
             page = pdf_reader.getPage(page_no)
             text = page.extractText()
         yield text.strip()
+
+
+def uncompress_pdf(filename):
+    logger.debug('Uncompress PDF file with qpdf %s', filename)
+    result = subprocess.run([
+        'qpdf', '--stream-data=uncompress', filename, '-'
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        print(result.stdout)
+        print(result.stderr)
+        raise RuntimeError()
+    return BytesIO(result.stdout)
+
+
+def compress_pdf(pdf_bytes):
+    logger.debug('Compress PDF file with qpdf')
+    f = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
+    try:
+        f.write(pdf_bytes.getvalue())
+        f.close()
+
+        result = subprocess.run([
+            'qpdf', '--linearize',
+            f.name,
+            '-'
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if result.returncode != 0:
+            print(result.stdout)
+            print(result.stderr)
+            raise RuntimeError()
+        return BytesIO(result.stdout)
+    finally:
+        os.remove(f.name)
+
+
+WATERMARK_LINE = (
+    '\n(Das Bundesgesetzblatt im Internet: www.bundesgesetzblatt'
+    '.de | Ein Service des Bundesanzeiger Verlag www.bundesanzei'
+    'ger-verlag.de)Tj'
+)
+
+
+def remove_watermark(filename, backup=True):
+    pdf_file = uncompress_pdf(filename)
+
+    doc = PdfReader(pdf_file)
+
+    doc = strip_all_xobjects(doc)
+
+    for page in doc.pages:
+        stream = page.Contents.stream
+        if WATERMARK_LINE not in stream:
+            logger.warning('PDF does not contain Watermark line: %s', filename)
+        stream = stream.replace(WATERMARK_LINE, '')
+
+        page.Contents = PdfDict()
+        page.Contents.stream = stream
+        page.Contents.Length = len(page.Contents.stream)
+
+    output = BytesIO()
+    outdata = PdfWriter(output)
+    outdata.trailer = doc
+    outdata.write()
+    compressed_output = compress_pdf(output)
+
+    if backup:
+        watermarked_path = filename.replace('.pdf', '_watermarked.pdf')
+        shutil.move(filename, watermarked_path)
+
+    with open(filename, 'wb') as f:
+        f.write(compressed_output.getvalue())
+
+
+def strip_all_xobjects(pdf):
+    for i, page in enumerate(pdf.pages):
+        names = list(page.Resources.XObject)
+        for name in names:
+            del page.Resources.XObject[name]
+
+    return pdf
