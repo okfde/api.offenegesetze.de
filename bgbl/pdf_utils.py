@@ -168,7 +168,7 @@ def complex_watermark_removal(stream, start_offset=1, end_offset=2):
 
 LOGO_HEIGHT = 26
 LOGO_WIDTH = 113
-THRESHOLD_RATIO = 0.1
+THRESHOLD_RATIO = 0.05
 STREAM_IMAGE_PATTERN = (
     '\nq [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+ '
     '[\d\.]+ [\d\.]+ cm\n{objid} Do\nQ'
@@ -199,6 +199,7 @@ def remove_image_from_page(page, objid):
 
 def strip_xobjects(pdf, exclude_func=lambda x: True):
     for i, page in enumerate(pdf.pages):
+        removed = False
         if page.Resources.XObject is None:
             continue
         names = list(page.Resources.XObject)
@@ -207,4 +208,7 @@ def strip_xobjects(pdf, exclude_func=lambda x: True):
             if exclude_func(obj):
                 del page.Resources.XObject[name]
                 remove_image_from_page(page, name)
+                removed = True
+        if not removed:
+            logger.warn('No logo removed on page %s', i)
     return pdf
