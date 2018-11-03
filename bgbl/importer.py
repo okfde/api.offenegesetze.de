@@ -248,7 +248,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
     TRIES = 5
     for i in range(TRIES):
         try:
-            p.save(timeout=30)
+            p.save(timeout='3m')
             return p
         except Exception as e:
             logger.exception()

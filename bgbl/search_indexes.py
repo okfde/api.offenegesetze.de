@@ -7,7 +7,7 @@ from elasticsearch_dsl import (
 from elasticsearch_dsl import connections
 
 
-connections.create_connection(hosts=[settings.ES_URL], timeout=20)
+connections.create_connection(hosts=[settings.ES_URL], timeout=120)
 
 og_analyzer = analyzer(
     'og_analyzer',
