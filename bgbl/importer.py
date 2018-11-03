@@ -156,7 +156,10 @@ class BGBlImporter:
             num_pages = 1
             if next_entry and next_entry['page'] and pdf_page is not None:
                 next_pdf_page = next_entry['page'] - page_offset
-                num_pages = next_pdf_page - pdf_page
+                num_pages = max(next_pdf_page - pdf_page, 1)
+            elif next_entry is None:
+                total_pages = get_num_pages(publication, self.document_path)
+                num_pages = total_pages - pdf_page + 1
 
             entry, entry_created = PublicationEntry.objects.get_or_create(
                 publication=publication,
@@ -177,6 +180,15 @@ class BGBlImporter:
                 )
 
         return created
+
+
+def get_num_pages(pub, document_path):
+    if hasattr(pub, 'num_pages'):
+        return pub.num_pages
+    filename = pub.get_path(document_path)
+    pdf_reader = PdfFileReader(filename)
+    pub.num_pages = pdf_reader.getNumPages()
+    return pub.num_pages
 
 
 def index_entry(pub, entry, document_path='', reindex=False):
@@ -223,7 +235,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
 
     end = len(pub._text)
     if entry.num_pages:
-        end = start + entry.num_pages + 1
+        end = start + entry.num_pages
 
     p.content = list(pub._text[start:end])
 
