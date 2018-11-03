@@ -239,8 +239,16 @@ def index_entry(pub, entry, document_path='', reindex=False):
 
     p.content = list(pub._text[start:end])
 
-    p.save()
-    return p
+    TRIES = 5
+    for i in range(TRIES):
+        try:
+            p.save(timeout=30)
+            return p
+        except Exception as e:
+            logger.exception()
+            logger.warn('Could not save %s (try %s)', pub_id, i)
+            if i == TRIES - 1:
+                raise e
 
 
 def get_text(filename):
