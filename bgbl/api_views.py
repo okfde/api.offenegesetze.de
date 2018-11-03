@@ -30,7 +30,7 @@ from rest_framework.utils.urls import (
 from rest_framework.settings import api_settings
 
 from .renderers import RSSRenderer
-from .search_indexes import Publication, og_publication
+from .search_indexes import Publication
 
 logger = logging.getLogger(name=__name__)
 
@@ -65,11 +65,13 @@ class NumberRangeFacet(Facet):
         try:
             if '-' in filter_value:
                 f, t = filter_value.split('-', 1)
-            if f == '':
+            else:
+                t = f = int(filter_value)
+            if not f:
                 f = None
             else:
                 f = int(f)
-            if t == '':
+            if not t:
                 t = None
             else:
                 t = int(t)
