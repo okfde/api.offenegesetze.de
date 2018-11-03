@@ -76,7 +76,12 @@ def edit_pdf_doc(filename, backup=True, backup_suffix='_backup'):
         f.write(compressed_output.getvalue())
 
 
-def remove_watermark(filename, publication=None, backup_suffix='_watermarked'):
+def remove_watermark(filename, publication=None, force=False,
+                     backup_suffix='_watermarked'):
+    watermarked_filename = filename.replace('.pdf', '%s.pdf' % backup_suffix)
+    if not force and os.path.exists(watermarked_filename):
+        return
+
     if publication is None:
         publication = Publication.objects.get_from_filename(filename)
 
