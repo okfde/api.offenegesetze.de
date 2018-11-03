@@ -23,7 +23,7 @@ class RSSRenderer(renderers.BaseRenderer):
             return ''
 
         fg = FeedGenerator()
-        feed_url = settings.API_URL + reverse('api:amtsblatt-list')
+        feed_url = settings.API_URL + reverse('api:veroeffentlichung-list')
         feed_title = 'OffeneGesetze.de'
         feed_description = 'Feed für Veröffentlichungen des Bundesgesetzblatts'
 
