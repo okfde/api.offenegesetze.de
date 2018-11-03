@@ -3,7 +3,7 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from bgbl.importer import remove_watermark
+from bgbl.pdf_utils import remove_watermark
 
 
 class Command(BaseCommand):
@@ -26,4 +26,5 @@ class Command(BaseCommand):
             watermarked_filename = filename.replace('.pdf', '_watermarked.pdf')
             if os.path.exists(watermarked_filename):
                 continue
+            print('Removing watermark', filename)
             remove_watermark(filename)

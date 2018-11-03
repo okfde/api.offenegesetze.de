@@ -1,19 +1,13 @@
 from datetime import date
 import itertools
-from io import BytesIO
 import logging
 import os
-import subprocess
-import shutil
-import tempfile
 
 from PyPDF2 import PdfFileReader
 try:
     import pdflib
 except ImportError:
     pdflib = None
-
-from pdfrw import PdfReader, PdfWriter, PdfDict, PdfName, PdfString, PdfTokens
 
 import dataset
 
@@ -258,128 +252,3 @@ def get_text(filename):
             page = pdf_reader.getPage(page_no)
             text = page.extractText()
         yield text.strip()
-
-
-def uncompress_pdf(filename):
-    logger.debug('Uncompress PDF file with qpdf %s', filename)
-    result = subprocess.run([
-        'qpdf', '--stream-data=uncompress', filename, '-'
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if result.returncode != 0:
-        print(result.stdout)
-        print(result.stderr)
-        raise RuntimeError()
-    return BytesIO(result.stdout)
-
-
-def compress_pdf(pdf_bytes):
-    logger.debug('Compress PDF file with qpdf')
-    f = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
-    try:
-        f.write(pdf_bytes.getvalue())
-        f.close()
-
-        result = subprocess.run([
-            'qpdf', '--linearize',
-            f.name,
-            '-'
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if result.returncode != 0:
-            print(result.stdout)
-            print(result.stderr)
-            raise RuntimeError()
-        return BytesIO(result.stdout)
-    finally:
-        os.remove(f.name)
-
-
-WATERMARK_LINE = (
-    '\n(Das Bundesgesetzblatt im Internet: www.bundesgesetzblatt'
-    '.de | Ein Service des Bundesanzeiger Verlag www.bundesanzei'
-    'ger-verlag.de)Tj'
-)
-
-
-def remove_watermark(filename, backup=True):
-    pdf_file = uncompress_pdf(filename)
-
-    doc = PdfReader(pdf_file)
-    meta = {
-        'Creator': 'OffeneGesetze.de',
-        'Keywords': 'Amtliches Werk nach §5 UrhG https://offenegesetze.de'
-    }
-
-    for key, val in meta.items():
-        doc.Info[PdfName(key)] = PdfString.from_unicode(val)
-
-    doc = strip_all_xobjects(doc)
-
-    for page_no, page in enumerate(doc.pages, 1):
-        stream = page.Contents.stream
-        if WATERMARK_LINE in stream:
-            stream = stream.replace(WATERMARK_LINE, '')
-        else:
-            stream, found = complex_watermark_removal(stream)
-            if not found:
-                logger.warning('No watermark removal: %s page %s',
-                               filename, page_no)
-
-        page.Contents = PdfDict()
-        page.Contents.stream = stream
-        page.Contents.Length = len(page.Contents.stream)
-
-    output = BytesIO()
-    outdata = PdfWriter(output)
-    outdata.trailer = doc
-    outdata.write()
-    compressed_output = compress_pdf(output)
-
-    if backup:
-        watermarked_path = filename.replace('.pdf', '_watermarked.pdf')
-        shutil.move(filename, watermarked_path)
-
-    with open(filename, 'wb') as f:
-        f.write(compressed_output.getvalue())
-
-
-NEEDLE_1 = '(Das Bundesgesetzblatt im Internet'
-NEEDLE_2 = 'nzeiger.de)'
-
-
-def complex_watermark_removal(stream, start_offset=1, end_offset=2):
-    found = False
-    start = None
-    end = None
-    for i, token in enumerate(PdfTokens(stream)):
-        if NEEDLE_1 in token:
-            start = i
-            found = True
-            continue
-        if NEEDLE_2 in token:
-            end = i
-    tokens = list(PdfTokens(stream))
-    if start is None or end is None:
-        return '\n'.join(tokens), False
-    if tokens[start - 1] == '[':
-        start = start - 1
-    while tokens[end].upper() != 'TJ':
-        end += 1
-    end += 1
-    return '\n'.join(tokens[:start] + tokens[end:]), found
-
-
-def strip_all_xobjects(pdf):
-    for i, page in enumerate(pdf.pages):
-        if page.Resources.XObject is None:
-            continue
-        names = list(page.Resources.XObject)
-        for name in names:
-            del page.Resources.XObject[name]
-
-    return pdf
