@@ -17,6 +17,7 @@ from bgbl.models import Publication, PublicationEntry
 from bgbl.search_indexes import (
     Publication as PublicationIndex,
 )
+from .pdf_utils import remove_watermark
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +62,14 @@ def get_pub_key(entry):
 
 class BGBlImporter:
     def __init__(self, db_path, document_path, rerun=False,
-                 reindex=False, parts=None):
+                 reindex=False, parts=None, watermark=False):
         self.db_path = db_path
         db = dataset.connect('sqlite:///' + db_path)
         self.table = db['data']
         self.document_path = document_path
         self.rerun = rerun
         self.reindex = reindex
+        self.watermark = watermark
         if parts is None:
             self.parts = (1, 2)
         else:
@@ -134,6 +136,10 @@ class BGBlImporter:
                         'page': entry['page']
                     }
                 )
+                if self.watermark:
+                    filename = publication.get_path(self.document_path)
+                    remove_watermark(filename, publication=publication)
+
                 if not created and not self.rerun and not self.reindex:
                     print('Skipping')
                     return False

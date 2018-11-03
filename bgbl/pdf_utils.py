@@ -76,8 +76,9 @@ def edit_pdf_doc(filename, backup=True, backup_suffix='_backup'):
         f.write(compressed_output.getvalue())
 
 
-def remove_watermark(filename, backup_suffix='_watermarked'):
-    publication = Publication.objects.get_from_filename(filename)
+def remove_watermark(filename, publication=None, backup_suffix='_watermarked'):
+    if publication is None:
+        publication = Publication.objects.get_from_filename(filename)
 
     with edit_pdf_doc(filename, backup_suffix=backup_suffix) as doc:
         fix_metadata(

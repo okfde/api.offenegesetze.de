@@ -20,6 +20,8 @@ class Command(BaseCommand):
                             dest='reindex')
         parser.add_argument("-D", action='store_true',
                             dest='destroy_index')
+        parser.add_argument("-m", action='store_true',
+                            dest='watermark')
         parser.add_argument("-p", action='store_true',
                             dest='parallel')
 
@@ -36,6 +38,7 @@ class Command(BaseCommand):
             options['db_path'], options['doc_path'],
             rerun=options['rerun'],
             reindex=options['reindex'],
+            watermark=options['watermark']
         )
         if options['parallel']:
             with Pool(4) as pool:
