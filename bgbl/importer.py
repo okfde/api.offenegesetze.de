@@ -189,7 +189,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
         pub.kind,
         pub.year,
         pub.number,
-        entry.order
+        entry.index_order
     )
 
     try:
@@ -205,7 +205,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
             year=pub.year,
             number=pub.number,
             date=pub.date,
-            order=entry.order,
+            order=entry.index_order,
             page=entry.page,
             pdf_page=entry.pdf_page,
             law_date=entry.law_date,

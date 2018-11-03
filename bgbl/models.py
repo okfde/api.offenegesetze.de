@@ -76,3 +76,7 @@ class PublicationEntry(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def index_order(self):
+        return self.order - 2
