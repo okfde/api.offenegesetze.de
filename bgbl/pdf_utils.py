@@ -179,10 +179,8 @@ def is_logo(obj):
     try:
         height = int(obj.Height)
         width = int(obj.Width)
-        color_space = str(obj.ColorSpace)
         subtype = str(obj.Subtype)
         if (subtype == '/Image' and
-                color_space == '/DeviceRGB' and
                 abs(LOGO_HEIGHT - height) / height < THRESHOLD_RATIO and
                 abs(LOGO_WIDTH - width) / width < THRESHOLD_RATIO):
             return True
