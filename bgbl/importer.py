@@ -163,7 +163,7 @@ class BGBlImporter:
             if next_entry and next_entry['page'] and pdf_page is not None:
                 next_pdf_page = next_entry['page'] - page_offset
                 num_pages = max(next_pdf_page - pdf_page, 1)
-            elif next_entry is None:
+            elif next_entry is None and pdf_page:
                 total_pages = get_num_pages(publication, self.document_path)
                 num_pages = total_pages - pdf_page + 1
 
