@@ -217,8 +217,6 @@ class CustomPageNumberPagination(PageNumberPagination):
         self.results = queryset.execute()
 
         self.page = self.results[:self.page_size]
-        if not len(self.page):
-            raise NotFound('Result page number too high.')
 
         return self.results, self.page
 
