@@ -122,10 +122,11 @@ class PublicationSearch(FacetedSearch):
         """
         if query:
             return search.query(
-                'simple_query_string',
+                'query_string',
                 analyzer='german',
                 fields=self.fields,
                 query=query,
+                auto_generate_phrase_queries=True,
                 default_operator='and',
                 lenient=True
             )
