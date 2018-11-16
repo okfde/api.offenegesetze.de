@@ -507,10 +507,15 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
     }
 
     def get_serializer_class(self):
-        try:
-            return self.serializer_action_classes[self.action]
-        except (KeyError, AttributeError):
+        if self.action == 'list':
+            has_filters = all(self.request.GET.get(x)
+                              for x in ('year', 'kind', 'number'))
+            if has_filters:
+                return PublicationDetailSerializer
             return PublicationSerializer
+        elif self.action == 'list':
+            return PublicationDetailSerializer
+        return PublicationSerializer
 
     def get_queryset(self):
         queryset = Publication.search()
