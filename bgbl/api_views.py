@@ -126,8 +126,7 @@ class PublicationSearch(FacetedSearch):
                 analyzer='og_analyzer',
                 fields=self.fields,
                 query=query,
-                # auto_generate_phrase_queries=True,
-                minimum_should_match='60%',
+                minimum_should_match='90%',
                 default_operator='AND',
                 lenient=True
             )
