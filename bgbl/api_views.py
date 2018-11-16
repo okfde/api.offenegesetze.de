@@ -97,6 +97,7 @@ class PublicationSearch(FacetedSearch):
     facets = {
         'kind': TermsFacet(field='kind'),
         'year': NumberRangeFacet(field='year'),
+        'page': NumberRangeFacet(field='page'),
         'number': NumberRangeFacet(field='number'),
         'date': DateHistogramFacet(
             field='date', interval='year'
