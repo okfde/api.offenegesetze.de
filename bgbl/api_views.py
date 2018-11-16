@@ -10,6 +10,7 @@ from elasticsearch_dsl.faceted_search import Facet
 from elasticsearch_dsl.query import Range
 
 from django.conf import settings
+from django.db.models import Max
 from django.urls import reverse
 
 from rest_framework import viewsets, serializers, status
@@ -29,6 +30,7 @@ from rest_framework.utils.urls import (
 )
 from rest_framework.settings import api_settings
 
+from .models import Publication as PublicationModel
 from .renderers import RSSRenderer
 from .search_indexes import Publication
 
@@ -544,3 +546,13 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def overview(self, request):
+        numbers = list(
+            PublicationModel.objects
+            .values('kind', 'year')
+            .order_by('kind', 'year')
+            .annotate(max_number=Max('number'))
+        )
+        return Response(numbers)
