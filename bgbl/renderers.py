@@ -31,7 +31,7 @@ class RSSRenderer(renderers.BaseRenderer):
         fg.title(feed_title)
         fg.subtitle(feed_description)
         fg.link(href=feed_url, rel='alternate')
-        # fg.logo('https://offenegesetze.de/img/logo.png')
+        fg.logo('https://offenegesetze.de/apple-touch-icon.png')
         fg.link(href=feed_url + '?format=rss', rel='self')
         fg.language('de')
         fg.generator('')

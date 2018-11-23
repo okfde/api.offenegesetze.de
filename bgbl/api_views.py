@@ -442,7 +442,7 @@ class PublicationFilter(BaseFilterBackend):
         query = request.GET.get('q')
 
         sort = None
-        if query:
+        if query and not request.GET.get('format') == 'rss':
             sort = ('_score',)
 
         queryset = PublicationSearch(
