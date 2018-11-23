@@ -13,13 +13,15 @@ og_analyzer = analyzer(
     'og_analyzer',
     tokenizer='standard',
     filter=[
-        'standard',
-        'lowercase',
         'keyword_repeat',
+        token_filter('decomp', type='decompound', subwords_only=True),
+
+        'lowercase',
         token_filter('stop_de', type='stop', stopwords="_german_"),
+
+        'german_normalization',
         'asciifolding',
-        # 'word_delimiter', # Breaks indexing
-        token_filter('decomp', type='decompound'),
+
         token_filter('de_stemmer', type='stemmer', name='light_german'),
         token_filter('unique_stem', type='unique', only_on_same_position=True)
     ],
