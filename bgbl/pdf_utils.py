@@ -54,6 +54,25 @@ def compress_pdf(pdf_bytes):
         os.remove(f.name)
 
 
+def fix_glyphs(filename):
+    logger.debug('Fix glyphs with pdftocairo')
+    fixed_path = filename.replace('.pdf', '_fixed.pdf')
+    result = subprocess.run([
+            'pdftocairo', '-pdf',
+            filename,
+            fixed_path
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        print(result.stdout)
+        print(result.stderr)
+        raise RuntimeError()
+
+    return fixed_path
+
+
 @contextmanager
 def edit_pdf_doc(filename, backup=True, backup_suffix='_backup'):
     pdf_file = uncompress_pdf(filename)
