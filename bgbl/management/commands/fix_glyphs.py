@@ -22,6 +22,9 @@ class Command(BaseCommand):
             filenames = glob(pattern, recursive=True)
 
         for original_filename in filenames:
+            if filename.endswith(('_original.pdf', '_watermarked.pdf')):
+                continue
+
             print('Fix glyphs', original_filename)
             fixed_filename = fix_glyphs(original_filename)
             real_filename = fixed_filename.replace('_fixed.pdf', '.pdf')
