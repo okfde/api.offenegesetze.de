@@ -22,7 +22,7 @@ class Command(BaseCommand):
             filenames = glob(pattern, recursive=True)
 
         for original_filename in filenames:
-            if filename.endswith(('_original.pdf', '_watermarked.pdf')):
+            if original_filename.endswith(('_original.pdf', '_watermarked.pdf')):
                 continue
 
             print('Fix glyphs', original_filename)
