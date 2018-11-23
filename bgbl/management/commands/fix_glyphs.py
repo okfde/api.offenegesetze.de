@@ -18,7 +18,7 @@ class Command(BaseCommand):
         if doc_path.endswith('.pdf'):
             filenames = [doc_path]
         else:
-            pattern = os.path.join(doc_path, '**/*_original.pdf')
+            pattern = os.path.join(doc_path, '**/*.pdf')
             filenames = glob(pattern, recursive=True)
 
         for original_filename in filenames:
@@ -31,4 +31,4 @@ class Command(BaseCommand):
             shutil.move(fixed_filename, real_filename)
 
             print('Adding meta data', real_filename)
-            remove_watermark(real_filename)
+            remove_watermark(real_filename, force=True)
