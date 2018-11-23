@@ -39,16 +39,17 @@ class RSSRenderer(renderers.BaseRenderer):
         if not isinstance(data, list):
             data = [data]
 
-        for item in data:
-            for entry in item['entries']:
-                fe = fg.add_entry()
-                fe.id('%s/%s#%s' % (
-                    settings.SITE_URL, item['id'], entry['order'])
-                )
-                fe.pubDate(item['date'])
-                fe.title(entry['title'])
-                fe.link({'href': item['url'] + entry['anchor']})
-                fe.content(entry['title'])
-                # fe.description(item['description'])
+        results = reversed(data[0]['results'])
+
+        for item in results:
+            fe = fg.add_entry()
+            fe.id('%s/%s' % (
+                settings.SITE_URL, item['id'])
+            )
+            fe.pubDate(item['date'])
+            fe.title(item['title'])
+            fe.link({'href': item['url']})
+            if 'content' in item:
+                fe.description(item['content'])
 
         return fg.rss_str(pretty=True)
