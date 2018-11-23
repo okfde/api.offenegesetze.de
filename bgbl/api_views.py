@@ -173,7 +173,11 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
     )
 
     def get_url(self, obj):
-        return self.get_document_url(obj)
+        return (
+            'https://offenegesetze.de/veroeffentlichung/'
+            '{kind}/{year}/{number}/'.format(**obj) +
+            '#page={}'.format(obj['pdf_page']) if obj.get('pdf_page') else ''
+        )
 
     def get_api_url(self, obj):
         return settings.API_URL + reverse(
