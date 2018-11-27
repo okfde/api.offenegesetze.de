@@ -7,7 +7,7 @@ from elasticsearch_dsl import (
     FacetedSearch, TermsFacet, DateHistogramFacet
 )
 from elasticsearch_dsl.faceted_search import Facet
-from elasticsearch_dsl.query import Range
+from elasticsearch_dsl.query import Range, Q
 
 from django.conf import settings
 from django.db.models import Max
@@ -95,6 +95,10 @@ class PublicationSearch(FacetedSearch):
     doc_types = [Publication]
     index = 'offenegesetze_publications'
     fields = ['title^3', 'content']
+    equivalences = {
+        'year': {'date'},
+        'date': {'year'}
+    }
 
     facets = {
         'kind': TermsFacet(field='kind'),
@@ -110,6 +114,22 @@ class PublicationSearch(FacetedSearch):
         assert isinstance(n, slice)
         self._s = self._s[n]
         return self
+
+    def aggregate(self, search):
+        "Respect equivalences of facets"
+        
+        for f, facet in self.facets.items():
+            agg = facet.get_aggregation()
+            agg_filter = Q('match_all')
+            for field, filter in self._filters.items():
+                if f == field or field in self.equivalences.get(f, set()):
+                    continue
+                agg_filter &= filter
+            search.aggs.bucket(
+                '_filter_' + f,
+                'filter',
+                filter=agg_filter
+            ).bucket(f, agg)
 
     def add_sort(self, *sort_args):
         self._sort = sort_args
