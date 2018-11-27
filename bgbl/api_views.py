@@ -117,7 +117,7 @@ class PublicationSearch(FacetedSearch):
 
     def aggregate(self, search):
         "Respect equivalences of facets"
-        
+
         for f, facet in self.facets.items():
             agg = facet.get_aggregation()
             agg_filter = Q('match_all')
