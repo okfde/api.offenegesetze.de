@@ -214,7 +214,8 @@ class PublicationSerializer(ElasticResultMixin, serializers.Serializer):
 
 class PublicationDetailSerializer(PublicationSerializer):
     content = serializers.ListField(
-        child=serializers.CharField()
+        child=serializers.CharField(),
+        required=False
     )
 
 
