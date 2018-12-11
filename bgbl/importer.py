@@ -120,7 +120,6 @@ class BGBlImporter:
         )
         publication = None
         created = True
-        page_offset = 0
 
         for entry, next_entry in pairwise(entries):
             if entry is None:
@@ -149,19 +148,12 @@ class BGBlImporter:
                         publication=publication).delete()
 
             if entry['kind'] == 'meta':
-                if entry['page'] is not None:
-                    # Set offset for these entries to
-                    # the meta page (usually ToC)
-                    page_offset = entry['page'] - 1
                 continue
 
-            pdf_page = (
-                entry['page'] - page_offset
-                if entry['page'] is not None else None
-            )
+            pdf_page = entry['page'] if entry['page'] is not None else None
             num_pages = 1
             if next_entry and next_entry['page'] and pdf_page is not None:
-                next_pdf_page = next_entry['page'] - page_offset
+                next_pdf_page = next_entry['page']
                 num_pages = max(next_pdf_page - pdf_page, 1)
             elif next_entry is None and pdf_page:
                 total_pages = get_num_pages(publication, self.document_path)
