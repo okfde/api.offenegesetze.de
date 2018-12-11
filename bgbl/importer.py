@@ -62,7 +62,8 @@ def get_pub_key(entry):
 
 class BGBlImporter:
     def __init__(self, db_path, document_path, rerun=False,
-                 reindex=False, parts=None, watermark=False):
+                 reindex=False, parts=None, watermark=False,
+                 years=None, numbers=None):
         self.db_path = db_path
         db = dataset.connect('sqlite:///' + db_path)
         self.table = db['data']
@@ -70,6 +71,8 @@ class BGBlImporter:
         self.rerun = rerun
         self.reindex = reindex
         self.watermark = watermark
+        self.years = years
+        self.numbers = numbers
         if parts is None:
             self.parts = (1, 2)
         else:
@@ -83,6 +86,10 @@ class BGBlImporter:
         entries = self.table.find(part=part, order_by=['-year', '-number'])
         current_pub_key = None
         for entry in entries:
+            if self.years is not None and entry.year not in self.years:
+                continue
+            if self.numbers is not None and entry.number not in self.numbers:
+                continue
             pub_key = get_pub_key(entry)
             if current_pub_key != pub_key:
                 current_pub_key = pub_key
