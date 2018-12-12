@@ -86,9 +86,10 @@ class BGBlImporter:
         entries = self.table.find(part=part, order_by=['-year', '-number'])
         current_pub_key = None
         for entry in entries:
-            if self.years is not None and entry.year not in self.years:
+            if self.years is not None and entry['year'] not in self.years:
                 continue
-            if self.numbers is not None and entry.number not in self.numbers:
+            if (self.numbers is not None and
+                    entry['number'] not in self.numbers):
                 continue
             pub_key = get_pub_key(entry)
             if current_pub_key != pub_key:
