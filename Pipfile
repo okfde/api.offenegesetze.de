@@ -16,6 +16,7 @@ coreapi = "*"
 feedgen = "*"
 raven = "*"
 pdfrw = "*"
+pyyaml = "*"
 
 [dev-packages]
 pylint = "*"
