@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 elasticsearch = "*"
 django = "*"
-elasticsearch-dsl = "*"
+elasticsearch-dsl = "==6.2.1"
 dataset = "*"
 pdflib = "*"
 "pypdf2" = "*"
