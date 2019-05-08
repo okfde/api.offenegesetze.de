@@ -49,11 +49,11 @@ def make_date(val):
         raise
 
 
-def pairwise(iterable):
-    "s -> (None,s0), (s0,s1), (s1, s2), ..."
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return itertools.zip_longest(a, b)
+def previous_and_next(some_iterable):
+    prevs, items, nexts = itertools.tee(some_iterable, 3)
+    prevs = itertools.chain([None], prevs)
+    nexts = itertools.chain(itertools.islice(nexts, 1, None), [None])
+    return zip(prevs, items, nexts)
 
 
 def get_pub_key(entry):
@@ -128,8 +128,10 @@ class BGBlImporter:
         )
         publication = None
         created = True
+        last_pdf_page = None
+        last_page = None
 
-        for entry, next_entry in pairwise(entries):
+        for prev_entry, entry, next_entry in previous_and_next(entries):
             if entry is None:
                 continue
 
@@ -158,14 +160,28 @@ class BGBlImporter:
             if entry['kind'] == 'meta':
                 continue
 
-            pdf_page = entry['page'] if entry['page'] is not None else None
+            if last_page is not None and entry['page'] is not None:
+                pdf_page = last_pdf_page + entry['page'] - last_page
+            elif prev_entry is not None and (
+                    prev_entry['page'] is not None and
+                    entry['page'] is not None):
+                # first non-meta entry always(?) starts on fresh page after meta
+                pdf_page = entry['page'] - prev_entry['page'] + 1
+            else:
+                # best guess
+                pdf_page = 2
+
             num_pages = 1
-            if next_entry and next_entry['page'] and pdf_page is not None:
-                next_pdf_page = next_entry['page']
-                num_pages = max(next_pdf_page - pdf_page, 1)
-            elif next_entry is None and pdf_page:
+            if next_entry and (
+                    next_entry['page'] is not None and
+                    entry['page'] is not None):
+                num_pages = max(next_entry['page'] - entry['page'], 1)
+            elif next_entry is None:
                 total_pages = get_num_pages(publication, self.document_path)
                 num_pages = total_pages - pdf_page + 1
+
+            last_page = entry['page'] + num_pages - 1
+            last_pdf_page = pdf_page + num_pages - 1
 
             entry, entry_created = PublicationEntry.objects.get_or_create(
                 publication=publication,
