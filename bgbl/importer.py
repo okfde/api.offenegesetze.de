@@ -226,6 +226,19 @@ def index_entry(pub, entry, document_path='', reindex=False):
         entry.index_order
     )
 
+    data = dict(
+        kind=pub.kind,
+        year=pub.year,
+        number=pub.number,
+        date=pub.date,
+        order=entry.index_order,
+        page=entry.page,
+        pdf_page=entry.pdf_page,
+        law_date=entry.law_date,
+        num_pages=entry.num_pages,
+        title=entry.title,
+    )
+
     try:
         p = PublicationIndex.get(
             id=pub_id
@@ -233,20 +246,12 @@ def index_entry(pub, entry, document_path='', reindex=False):
         if not reindex:
             # Already in index
             return
+        # Update all properties
+        for k, v in data.items():
+            setattr(p, k, v)
     except elasticsearch.exceptions.NotFoundError:
-        p = PublicationIndex(
-            kind=pub.kind,
-            year=pub.year,
-            number=pub.number,
-            date=pub.date,
-            order=entry.index_order,
-            page=entry.page,
-            pdf_page=entry.pdf_page,
-            law_date=entry.law_date,
-            num_pages=entry.num_pages,
-            title=entry.title,
-        )
-    p.meta.id = pub_id
+        p = PublicationIndex(**data)
+        p.meta.id = pub_id
 
     if not hasattr(pub, '_text'):
         pub._text = list(get_text(pub_path))
