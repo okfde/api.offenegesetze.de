@@ -165,7 +165,7 @@ class BGBlImporter:
             elif prev_entry is not None and (
                     prev_entry['page'] is not None and
                     entry['page'] is not None):
-                # first non-meta entry always(?) starts on fresh page after meta
+                # first non-meta entry always? starts on fresh page after meta
                 pdf_page = entry['page'] - prev_entry['page'] + 1
             else:
                 # best guess
@@ -180,7 +180,10 @@ class BGBlImporter:
                 total_pages = get_num_pages(publication, self.document_path)
                 num_pages = total_pages - pdf_page + 1
 
-            last_page = entry['page'] + num_pages - 1
+            if entry['page'] is not None:
+                last_page = entry['page'] + num_pages - 1
+            else:
+                last_page = num_pages - 1
             last_pdf_page = pdf_page + num_pages - 1
 
             entry, entry_created = PublicationEntry.objects.get_or_create(
