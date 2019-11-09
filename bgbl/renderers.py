@@ -39,7 +39,7 @@ class RSSRenderer(renderers.BaseRenderer):
         if not isinstance(data, list):
             data = [data]
 
-        results = reversed(data[0]['results'])
+        results = reversed(data[0].get('results', []))
 
         for item in results:
             fe = fg.add_entry()
