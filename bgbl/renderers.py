@@ -50,6 +50,9 @@ class RSSRenderer(renderers.BaseRenderer):
             fe.title(item['title'])
             fe.link({'href': item['url']})
             if 'content' in item:
-                fe.description(item['content'])
+                fe.description(
+                    item['content'] if isinstance(item['content'], str)
+                    else ''.join(item['content'])
+                )
 
         return fg.rss_str(pretty=True)
