@@ -144,7 +144,6 @@ class PublicationSearch(FacetedSearch):
         Override this if you wish to customize the query used.
         """
         if query:
-            print(search.to_dict())
             return search.query(
                 'simple_query_string',
                 analyzer='og_analyzer',
