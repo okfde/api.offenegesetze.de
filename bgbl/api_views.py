@@ -144,6 +144,7 @@ class PublicationSearch(FacetedSearch):
         Override this if you wish to customize the query used.
         """
         if query:
+            print(search.to_dict())
             return search.query(
                 'simple_query_string',
                 analyzer='og_analyzer',
@@ -541,7 +542,7 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
             if has_filters:
                 return PublicationDetailSerializer
             return PublicationSerializer
-        elif self.action == 'list':
+        elif self.action == 'retrieve':
             return PublicationDetailSerializer
         return PublicationSerializer
 
