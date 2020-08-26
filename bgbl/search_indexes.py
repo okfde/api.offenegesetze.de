@@ -1,6 +1,6 @@
 from django.conf import settings
 from elasticsearch_dsl import (
-    DocType, Date, Integer,
+    Document, Date, Integer,
     analyzer, Keyword, Text,
     Index, token_filter
 )
@@ -9,12 +9,22 @@ from elasticsearch_dsl import connections
 
 connections.create_connection(hosts=[settings.ES_URL], timeout=120)
 
+decomp = token_filter(
+    "decomp",
+    type='hyphenation_decompounder',
+    word_list_path="analysis/dictionary-de.txt",
+    hyphenation_patterns_path="analysis/de_DR.xml",
+    only_longest_match=True,
+    min_subword_size=4
+)
+
+
 og_analyzer = analyzer(
     'og_analyzer',
     tokenizer='standard',
     filter=[
         'keyword_repeat',
-        token_filter('decomp', type='decompound', subwords_only=True),
+        decomp,
 
         'lowercase',
         token_filter('stop_de', type='stop', stopwords="_german_"),
@@ -23,7 +33,7 @@ og_analyzer = analyzer(
         'asciifolding',
 
         token_filter('de_stemmer', type='stemmer', name='light_german'),
-        token_filter('unique_stem', type='unique', only_on_same_position=True)
+        'remove_duplicates'
     ],
 )
 
@@ -40,8 +50,15 @@ og_quote_analyzer = analyzer(
     ],
 )
 
+index = Index('offenegesetze_publications')
+index.settings(
+    number_of_shards=1,
+    number_of_replicas=0
+)
 
-class Publication(DocType):
+
+@index.document
+class Publication(Document):
     kind = Keyword()
     year = Integer()
     number = Integer()
@@ -67,21 +84,10 @@ class Publication(DocType):
     )
 
 
-og_publication = Index('offenegesetze_publications')
-og_publication.settings(
-    number_of_shards=1,
-    number_of_replicas=0
-)
-
-og_publication.doc_type(Publication)
-og_publication.analyzer(og_analyzer)
-# og_publication.settings(**{"index.highlight.max_analyzed_offset": 10000})
-
-
 def _destroy_index():
-    og_publication.delete()
+    index.delete()
 
 
 def init_es():
-    if not og_publication.exists():
-        og_publication.create()
+    if not index.exists():
+        Publication.init()
