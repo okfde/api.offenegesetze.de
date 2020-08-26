@@ -6,9 +6,8 @@ name = "pypi"
 [packages]
 elasticsearch = "*"
 django = "*"
-elasticsearch-dsl = "==6.2.1"
+elasticsearch-dsl = ">=7.0.0,<8.0.0"
 dataset = "*"
-pdflib = "*"
 "pypdf2" = "*"
 gunicorn = "*"
 django-rest-framework = "*"
@@ -17,10 +16,11 @@ feedgen = "*"
 raven = "*"
 pdfrw = "*"
 pyyaml = "*"
+cython = "*"
 
 [dev-packages]
 pylint = "*"
 ipdb = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.8"
