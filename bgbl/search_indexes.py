@@ -36,7 +36,7 @@ og_quote_analyzer = analyzer(
         'german_normalization',
         'asciifolding',
         token_filter('de_stemmer', type='stemmer', name='light_german'),
-        'remove_duplicates'
+        token_filter('unique_stem', type='unique', only_on_same_position=True)
     ],
 )
 
