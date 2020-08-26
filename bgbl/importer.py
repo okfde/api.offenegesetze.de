@@ -118,7 +118,7 @@ class BGBlImporter:
         for pub_key in self.get_issue_params(part):
             print(pub_key)
             created = self.import_publication(*pub_key)
-            if not created and not self.rerun:
+            if not created and not self.rerun and not self.reindex:
                 return
 
     def import_publication(self, part, year, number):
