@@ -13,7 +13,7 @@ api_router = DefaultRouter()
 api_router.register(
     r'veroeffentlichung',
     PublicationViewSet,
-    base_name='veroeffentlichung'
+    basename='veroeffentlichung'
 )
 
 
