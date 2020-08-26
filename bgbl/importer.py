@@ -275,8 +275,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
             p.save(timeout='3m')
             return p
         except Exception as e:
-            logger.exception()
-            logger.warn('Could not save %s (try %s)', pub_id, i)
+            logger.exception('Could not save %s (try %s)', pub_id, i)
             if i == TRIES - 1:
                 raise e
 
