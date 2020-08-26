@@ -145,12 +145,10 @@ class PublicationSearch(FacetedSearch):
         """
         if query:
             return search.query(
-                'simple_query_string',
-                analyzer='og_analyzer',
-                fields=self.fields,
+                "simple_query_string",
                 query=query,
-                minimum_should_match='80%',
-                default_operator='AND',
+                fields=self.fields,
+                default_operator='and',
                 lenient=True
             )
         return search
