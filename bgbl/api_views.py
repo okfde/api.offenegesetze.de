@@ -250,7 +250,7 @@ class CustomPageNumberPagination(PageNumberPagination):
     def get_next_link(self):
         if self.page_number >= self.max_page:
             return None
-        if self.page_number * self.page_size > self.results.hits.total:
+        if self.page_number * self.page_size > self.results.hits.total.value:
             return None
         url = self.request.build_absolute_uri()
         page_number = self.page_number + 1
@@ -554,8 +554,8 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response({
             'results': serializer.data,
-            'facets': results.facets,
-            'count': results.hits.total
+            'facets': results.facets.to_dict(),
+            'count': results.hits.total.value
         })
 
     @action(detail=False, renderer_classes=(RSSRenderer,))
