@@ -76,7 +76,6 @@ class Publication(Document):
     law_date = Date()
     pdf_page = Integer()
     content = Text(
-        fields={'raw': Keyword()},
         analyzer=og_analyzer,
         search_analyzer=og_analyzer,
         search_quote_analyzer=og_quote_analyzer,
