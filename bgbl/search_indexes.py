@@ -27,6 +27,19 @@ og_analyzer = analyzer(
     ],
 )
 
+og_quote_analyzer = analyzer(
+    'og_quote_analyzer',
+    tokenizer='standard',
+    filter=[
+        'keyword_repeat',
+        'lowercase',
+        'german_normalization',
+        'asciifolding',
+        token_filter('de_stemmer', type='stemmer', name='light_german'),
+        'remove_duplicates'
+    ],
+)
+
 
 class Publication(DocType):
     kind = Keyword()
@@ -39,6 +52,8 @@ class Publication(DocType):
     title = Text(
         fields={'raw': Keyword()},
         analyzer=og_analyzer,
+        search_analyzer=og_analyzer,
+        search_quote_analyzer=og_quote_analyzer,
         index_options='offsets'
     )
     law_date = Date()
@@ -46,6 +61,8 @@ class Publication(DocType):
     content = Text(
         fields={'raw': Keyword()},
         analyzer=og_analyzer,
+        search_analyzer=og_analyzer,
+        search_quote_analyzer=og_quote_analyzer,
         index_options='offsets'
     )
 
