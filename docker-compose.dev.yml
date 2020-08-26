@@ -4,10 +4,17 @@ services:
   elasticsearch:
     build: ./deps/elasticsearch/
     volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-      - elasticsearch-log:/var/log
+      - ./data/elasticsearch-data:/usr/share/elasticsearch/data
+      - ./data/elasticsearch-log:/var/log
     ports:
-      - "9201:9200"
+      - "127.0.0.1:9200:9200"
+    expose: [9200]
+    environment:
+      - "discovery.type=single-node"
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "cluster.routing.allocation.disk.watermark.low=3gb"
+      - "cluster.routing.allocation.disk.watermark.high=2gb"
+      - "cluster.routing.allocation.disk.watermark.flood_stage=1gb"
 
   app:
     build: .
@@ -17,9 +24,10 @@ services:
     volumes:
       - "./:/code"
     environment:
+      SHELL: /bin/bash
       OG_ELASTICSEARCH_URI: http://elasticsearch:9200
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
 volumes:
   elasticsearch-data: {}
