@@ -139,11 +139,14 @@ def fix_metadata(doc, title=None, creation_date=None):
         doc.Info[PdfName(key)] = val
 
 
-WATERMARK_LINE = (
+WATERMARK_LINES = [(
     '\n(Das Bundesgesetzblatt im Internet: www.bundesgesetzblatt'
     '.de | Ein Service des Bundesanzeiger Verlag www.bundesanzei'
-    'ger-verlag.de)Tj'
-)
+    'ger-verlag.de)Tj'), (
+    '[(Das Bundesgesetzblatt im Internet: www)55(.bundesgesetzblatt.de'
+    ' | Ein Service des Bundesanzeiger V)55(erlag www)55(.bundesanzeiger'
+    '-verlag.de)]TJ')
+]
 
 
 def remove_watermark_objects(doc, filename=None):
@@ -151,13 +154,19 @@ def remove_watermark_objects(doc, filename=None):
 
     for page_no, page in enumerate(doc.pages, 1):
         stream = page.Contents.stream
-        if WATERMARK_LINE in stream:
-            stream = stream.replace(WATERMARK_LINE, '')
-        else:
+        found = False
+        for watermark_line in WATERMARK_LINES:
+            if watermark_line in stream:
+                stream = stream.replace(watermark_line, '')
+                found = True
+                break
+        if not found:
             stream, found = complex_watermark_removal(stream)
             if not found:
-                logger.warning('No watermark removal: %s page %s',
-                               filename, page_no)
+                logger.warning(
+                    'No watermark removal: %s page %s',
+                    filename, page_no
+                )
 
         page.Contents = PdfDict()
         page.Contents.stream = stream
