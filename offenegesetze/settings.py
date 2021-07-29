@@ -11,7 +11,11 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import raven
+import logging
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 
 def env(a, b=None):
@@ -47,8 +51,6 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'bgbl',
-
-    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -196,9 +198,11 @@ REST_FRAMEWORK = {
     'UNAUTHENTICATED_USER': None
 }
 
-RAVEN_CONFIG = {
-    'dsn': env('DJANGO_SENTRY_DSN', ''),
-    # If you are using git, you can also automatically configure the
-    # release based on the git info.
-    'release': raven.fetch_git_sha(BASE_DIR),
-}
+sentry_logging = LoggingIntegration(
+    level=logging.INFO,  # Capture info and above as breadcrumbs
+    event_level=logging.ERROR,  # Send errors as events
+)
+sentry_sdk.init(
+    dsn=env('DJANGO_SENTRY_DSN'),
+    integrations=[sentry_logging, DjangoIntegration()]
+)
