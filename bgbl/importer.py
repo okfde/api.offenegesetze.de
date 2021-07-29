@@ -177,7 +177,13 @@ class BGBlImporter:
                     entry['page'] is not None):
                 num_pages = max(next_entry['page'] - entry['page'], 1)
             elif next_entry is None:
-                total_pages = get_num_pages(publication, self.document_path)
+                try:
+                    total_pages = get_num_pages(
+                        publication,
+                        self.document_path
+                    )
+                except IOError:
+                    continue
                 num_pages = total_pages - pdf_page + 1
 
             if entry['page'] is not None:
@@ -198,11 +204,15 @@ class BGBlImporter:
                 )
             )
             if entry_created or self.reindex:
-                index_entry(
+                text = index_entry(
                     publication, entry,
                     document_path=self.document_path,
                     reindex=self.reindex
                 )
+                if text:
+                    PublicationEntry.objects.filter(id=entry.id).update(
+                        content=text
+                    )
 
         return created
 
@@ -267,7 +277,8 @@ def index_entry(pub, entry, document_path='', reindex=False):
     if entry.num_pages:
         end = start + entry.num_pages
 
-    p.content = list(pub._text[start:end])
+    text = list(pub._text[start:end])
+    p.content = text
 
     TRIES = 5
     for i in range(TRIES):
@@ -278,6 +289,7 @@ def index_entry(pub, entry, document_path='', reindex=False):
             logger.exception('Could not save %s (try %s)', pub_id, i)
             if i == TRIES - 1:
                 raise e
+    return '\n\n\n'.join(text)
 
 
 def get_text(filename):

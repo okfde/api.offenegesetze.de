@@ -70,6 +70,7 @@ class PublicationEntry(models.Model):
     page = models.PositiveIntegerField(null=True, blank=True)
     pdf_page = models.PositiveIntegerField(null=True, blank=True)
     num_pages = models.PositiveIntegerField(default=1)
+    content = models.TextField(blank=True)
 
     class Meta:
         ordering = ('page',)
