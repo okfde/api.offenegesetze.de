@@ -143,7 +143,7 @@ WATERMARK_LINES = [(
     '\n(Das Bundesgesetzblatt im Internet: www.bundesgesetzblatt'
     '.de | Ein Service des Bundesanzeiger Verlag www.bundesanzei'
     'ger-verlag.de)Tj'), (
-    '[(Das Bundesgesetzblatt im Internet: www)55(.bundesgesetzblatt.de'
+    '\n[(Das Bundesgesetzblatt im Internet: www)55(.bundesgesetzblatt.de'
     ' | Ein Service des Bundesanzeiger V)55(erlag www)55(.bundesanzeiger'
     '-verlag.de)]TJ')
 ]
@@ -174,7 +174,7 @@ def remove_watermark_objects(doc, filename=None):
 
 
 NEEDLE_1 = '(Das Bundesgesetzblatt im Internet'
-NEEDLE_2 = 'nzeiger.de)'
+NEEDLE_2 = 'ger-verlag.de)'
 
 
 def complex_watermark_removal(stream, start_offset=1, end_offset=2):
