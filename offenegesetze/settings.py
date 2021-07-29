@@ -186,6 +186,8 @@ DEFAULT_LOGGING = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 API_URL = 'https://api.offenegesetze.de'
 SITE_URL = 'https://offenegesetze.de'
 
