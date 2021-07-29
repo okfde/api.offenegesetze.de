@@ -24,7 +24,7 @@ from rest_framework.pagination import (
     PageNumberPagination, CursorPagination,
     _reverse_ordering, _positive_int, Cursor
 )
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, APIException
 from rest_framework.utils.urls import (
     replace_query_param, remove_query_param
 )
@@ -35,6 +35,12 @@ from .renderers import RSSRenderer
 from .search_indexes import Publication
 
 logger = logging.getLogger(name=__name__)
+
+
+class ServiceUnavailable(APIException):
+    status_code = 503
+    default_detail = 'Service temporarily unavailable, try again later.'
+    default_code = 'service_unavailable'
 
 
 def make_dict(hit):
@@ -549,7 +555,10 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
-        results, page = self.paginate_queryset(queryset)
+        try:
+            results, page = self.paginate_queryset(queryset)
+        except elasticsearch.exceptions.TransportError:
+            raise ServiceUnavailable()
 
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response({
@@ -567,6 +576,8 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
             instance = Publication.get(id=pk)
         except elasticsearch.exceptions.NotFoundError:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        except elasticsearch.exceptions.TransportError:
+            raise ServiceUnavailable()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
