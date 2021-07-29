@@ -1,0 +1,13 @@
+elasticsearch
+django
+elasticsearch-dsl>=7.0.0,<8.0.0
+dataset
+pdflib
+pypdf2
+gunicorn
+django-rest-framework
+coreapi
+feedgen
+sentry-sdk
+pdfrw
+pyyaml

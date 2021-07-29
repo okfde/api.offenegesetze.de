@@ -3,19 +3,18 @@ FROM python:3.8
 RUN apt-get update && apt-get install -y qpdf poppler-utils
 
 # Install Python dependencies
-RUN pip install pipenv
 
-COPY Pipfile /code/
-COPY Pipfile.lock /code/
+COPY requirements.txt /code/
 
 WORKDIR /code
 
-RUN cd /code/ && pipenv install -d
+RUN cd /code/ && python -m pip install -r requirements.txt
 
 COPY . /code
 
 ENV PYTHONPATH /code
+RUN python manage.py collectstatic --noinput
 
 # Run the green unicorn
-CMD pipenv run python manage.py collectstatic --noinput && pipenv run gunicorn -w 4 -b 0.0.0.0:8040 --name offenegesetze_gunicorn \
+CMD python manage.py collectstatic --noinput && gunicorn -w 4 -b 0.0.0.0:8045 --name offenegesetze_gunicorn \
   --log-level info --log-file /var/log/gunicorn.log offenegesetze.wsgi:application

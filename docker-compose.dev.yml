@@ -16,9 +16,9 @@ services:
       - "cluster.routing.allocation.disk.watermark.high=2gb"
       - "cluster.routing.allocation.disk.watermark.flood_stage=1gb"
 
-  app:
+  backend:
     build: .
-    command: pipenv run python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8045
     links:
       - elasticsearch
     volumes:
@@ -27,7 +27,7 @@ services:
       SHELL: /bin/bash
       OG_ELASTICSEARCH_URI: http://elasticsearch:9200
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8045:8045"
 
 volumes:
   elasticsearch-data: {}
