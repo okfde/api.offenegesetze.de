@@ -322,7 +322,7 @@ class FilterPagination(CursorPagination):
         # We also always fetch an extra item in order to determine if there is a
         # page following on from this one.
         queryset = queryset[offset:offset + self.page_size + 1]
-        logger.debug('ES query: %s', json.dumps(queryset._s.to_dict()))
+        logger.info('ES query: %s', json.dumps(queryset._s.to_dict()))
         results = queryset.execute()
 
         self.page = results[:self.page_size]
