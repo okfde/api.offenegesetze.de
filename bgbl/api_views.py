@@ -460,6 +460,10 @@ class PublicationFilter(BaseFilterBackend):
         if kind:
             filters['kind'] = kind
 
+        order = request.GET.getlist('order')
+        if order:
+            filters['order'] = order
+
         filter_page = request.GET.getlist('page')
         if filter_page:
             filters['page'] = filter_page
