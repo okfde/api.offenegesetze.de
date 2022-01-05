@@ -112,7 +112,7 @@ class PublicationSearch(FacetedSearch):
         'page': NumberRangeFacet(field='page'),
         'number': NumberRangeFacet(field='number'),
         'date': DateHistogramFacet(
-            field='date', interval='year'
+            field='date', calendar_interval='year'
         )
     }
 
